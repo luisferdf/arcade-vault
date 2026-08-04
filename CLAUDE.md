@@ -18,14 +18,7 @@ Arcade Vault — a platform for playing games online and competing for score (pe
 
 Development follows **Spec Driven Design** using the `/spec` and `/spec-impl` workflow from https://github.com/Klerith/fernando-skills (installed via `npx skills@latest add Klerith/fernando-skills`).
 
-## Commands
 
-```bash
-npm run dev      # start dev server
-npm run build    # production build
-npm run start    # run production build
-npm run lint     # eslint (flat config, eslint.config.mjs)
-```
 
 No test runner is configured yet.
 
@@ -35,3 +28,6 @@ No test runner is configured yet.
 - Tailwind CSS v4 via `@tailwindcss/postcss` (no `tailwind.config.*` — v4 is CSS-first, configured in `app/globals.css`)
 - Path alias `@/*` → project root (`tsconfig.json`)
 - ESLint flat config extending `eslint-config-next` (core-web-vitals + typescript)
+
+## skills
+ Usa siempre /frontend-desing para diseñar la interfaz de usuario.

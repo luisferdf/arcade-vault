@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type SubmitEvent } from "react";
 import { HighlightIcon, type HighlightIconProps } from "../_components/HighlightIcon";
 
 const HIGHLIGHTS: { i: HighlightIconProps["kind"]; t: string; c: "magenta" | "cyan" | "green" }[] = [
@@ -38,7 +38,7 @@ export default function About() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [shake, setShake] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim() || !form.msg.trim()) {
       setShake(true);
@@ -47,7 +47,23 @@ export default function About() {
     }
     setErrorMsg(null);
     setStatus("sending");
-    setTimeout(() => setStatus("sent"), 600);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: form.name, email: form.email, message: form.msg }),
+      });
+      const data: { ok: boolean; error?: string } = await res.json();
+      if (!res.ok || !data.ok) {
+        setErrorMsg(data.error || "No se pudo enviar el mensaje. Intenta de nuevo.");
+        setStatus("error");
+        return;
+      }
+      setStatus("sent");
+    } catch {
+      setErrorMsg("No se pudo enviar el mensaje. Intenta de nuevo.");
+      setStatus("error");
+    }
   };
 
   return (

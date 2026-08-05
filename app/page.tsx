@@ -5,6 +5,32 @@ import Link from "next/link";
 import { GAMES } from "@/lib/games";
 import { FeatureCard } from "./_components/FeatureCard";
 import { MiniGameCard } from "./_components/MiniGameCard";
+import { ActivityTicker, type ActivityRow } from "./_components/ActivityTicker";
+import { TopPlayersList, type TopPlayerRow } from "./_components/TopPlayersList";
+
+const STATS = [
+  { n: "12+", u: "JUEGOS", s: "Y CONTANDO" },
+  { n: "MILES", u: "DE PARTIDAS", s: "JUGADAS CADA DÍA" },
+  { n: "GLOBAL", u: "RANKING", s: "COMPITE CON EL MUNDO" },
+] as const;
+
+const ACTIVITY_ROWS: ActivityRow[] = [
+  { player: "NEONFOX", game: "Caída", score: 184220, time: "hace 2 min", color: "magenta" },
+  { player: "PX_KAI", game: "Glotón", score: 96400, time: "hace 5 min", color: "yellow" },
+  { player: "Z3R0COOL", game: "Invasores", score: 54190, time: "hace 8 min", color: "green" },
+  { player: "VAULT_07", game: "Rocas", score: 41200, time: "hace 12 min", color: "cyan" },
+  { player: "GLITCHA", game: "Bloque Buster", score: 28450, time: "hace 18 min", color: "cyan" },
+  { player: "ARKADYA", game: "Serpentina", score: 7820, time: "hace 24 min", color: "green" },
+  { player: "CYBER_LU", game: "Ranaria", score: 18900, time: "hace 31 min", color: "yellow" },
+];
+
+const TOP_PLAYERS: TopPlayerRow[] = [
+  { rank: 1, player: "NEONFOX", score: 312840 },
+  { rank: 2, player: "PX_KAI", score: 248110 },
+  { rank: 3, player: "M00NRYU", score: 196720 },
+  { rank: 4, player: "VAULT_07", score: 154300 },
+  { rank: 5, player: "GLITCHA", score: 138900 },
+];
 
 const FEATURES = [
   {
@@ -220,6 +246,44 @@ export default function Home() {
           <Link href="/biblioteca" className="btn lg">
             VER TODOS LOS JUEGOS →
           </Link>
+        </div>
+      </section>
+
+      <section className="home-stats reveal">
+        <div className="stats-inner">
+          {STATS.map((st, i) => (
+            <div key={st.u} className="stat-block" style={{ transitionDelay: `${i * 90}ms` }}>
+              <div className="stat-n neon-yellow">{st.n}</div>
+              <div className="stat-u pixel">{st.u}</div>
+              <div className="stat-s">{st.s}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="home-section reveal">
+        <div className="section-head">
+          <div className="kicker pixel neon-yellow">// 03</div>
+          <h2 className="section-title">ACTIVIDAD EN VIVO</h2>
+          <div className="section-rule" />
+        </div>
+        <div className="activity-grid">
+          <div className="activity-card">
+            <div className="ac-head">
+              <div className="ac-title pixel">▸ ÚLTIMAS PUNTUACIONES</div>
+            </div>
+            <ActivityTicker rows={ACTIVITY_ROWS} />
+          </div>
+
+          <div className="activity-card">
+            <div className="ac-head">
+              <div className="ac-title pixel neon-magenta">▸ TOP JUGADORES · HOY</div>
+              <Link href="/salon" className="lb-link">
+                VER SALÓN →
+              </Link>
+            </div>
+            <TopPlayersList players={TOP_PLAYERS} />
+          </div>
         </div>
       </section>
     </div>

@@ -1,6 +1,6 @@
 # SPEC 02 — Home (landing) de Arcade Vault
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 01-mvp-visual (Nav, tokens de tema en `globals.css`, `lib/games.ts`)
 > **Fecha:** 2026-08-05
 > **Objetivo:** Reemplazar la ruta `/` (hoy la Biblioteca) por una landing page fiel a `references/templates/home.jsx`, moviendo la Biblioteca a `/biblioteca` y dejando `/home` como redirect a `/`.

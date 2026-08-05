@@ -1,6 +1,6 @@
 # SPEC 03 — About page y envío de correo de contacto
 
-> **Estado:** APROBADO
+> **Estado:** implementado
 > **Depende de:** 01-mvp-visual (Nav, tokens de tema en `globals.css`), 02-home-landing (Nav actualizado, convención de componentes en `app/_components/`)
 > **Fecha:** 2026-08-05
 > **Objetivo:** Implementar la ruta `/about` fiel a `references/templates/Home-about` (contenido real recuperado del archivo `download (1)`), con un formulario de contacto que envía un correo real vía Resend a `luisfernandodiazfernandez@gmail.com`.

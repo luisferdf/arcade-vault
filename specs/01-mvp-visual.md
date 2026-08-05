@@ -1,6 +1,6 @@
 # SPEC 01 — MVP visual de Arcade Vault
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** Ninguno
 > **Fecha:** 2026-08-04
 > **Objetivo:** Construir las 5 pantallas visuales del MVP (Biblioteca, Detalle de juego, Reproductor, Auth, Salón de la Fama) migrando el diseño de `references/templates/` a Next.js 16 + Tailwind v4, sin implementar lógica real de ningún juego.

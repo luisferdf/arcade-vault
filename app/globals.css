@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* ===== ARCADE VAULT — Tailwind v4 theme tokens ===== */
+@theme {
+  --font-display: var(--pixel);
+  --font-body: var(--mono);
+
+  --color-bg: var(--bg);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-ink-faint: var(--ink-faint);
+  --color-cyan: var(--cyan);
+  --color-magenta: var(--magenta);
+  --color-yellow: var(--yellow);
+  --color-green: var(--green);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+
+  --shadow-glow-cyan: 0 0 14px rgba(0, 245, 255, 0.55), inset 0 0 8px rgba(0, 245, 255, 0.35);
+  --shadow-glow-magenta: 0 0 14px rgba(255, 0, 110, 0.55), inset 0 0 8px rgba(255, 0, 110, 0.35);
+  --shadow-glow-yellow: 0 0 14px rgba(245, 255, 0, 0.6), inset 0 0 8px rgba(245, 255, 0, 0.35);
+  --shadow-glow-green: 0 0 14px rgba(0, 255, 136, 0.55), inset 0 0 8px rgba(0, 255, 136, 0.35);
+}
+
 /* ===== ARCADE VAULT — theme ===== */
 :root {
   --bg: #0a0a0f;

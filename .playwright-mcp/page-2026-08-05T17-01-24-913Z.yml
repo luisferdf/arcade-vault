@@ -1,0 +1,221 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e3]:
+      - link "ARCADE VAULT" [ref=e4] [cursor=pointer]:
+        - /url: /
+      - generic [ref=e7]:
+        - link "Inicio" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "Biblioteca" [ref=e9] [cursor=pointer]:
+          - /url: /biblioteca
+        - link "Salón de la Fama" [ref=e10] [cursor=pointer]:
+          - /url: /salon
+      - generic [ref=e11]: CRÉDITOS · 03
+      - link "Iniciar Sesión" [ref=e14] [cursor=pointer]:
+        - /url: /auth
+    - complementary [ref=e15]:
+      - generic [ref=e16]: MENÚ
+      - link "Inicio" [ref=e17] [cursor=pointer]:
+        - /url: /
+      - link "Biblioteca" [ref=e18] [cursor=pointer]:
+        - /url: /biblioteca
+      - link "Salón de la Fama" [ref=e19] [cursor=pointer]:
+        - /url: /salon
+      - link "Iniciar Sesión" [ref=e20] [cursor=pointer]:
+        - /url: /auth
+      - generic [ref=e22]: CRÉDITOS · 03
+    - main [ref=e23]:
+      - generic [ref=e24]:
+        - generic [ref=e26]:
+          - generic [ref=e27]: ▸ INSERTA UNA MONEDA_
+          - heading "EL ARCADE CLÁSICO ESTÁ DE VUELTA" [level=1] [ref=e28]:
+            - generic [ref=e29]: EL ARCADE
+            - generic [ref=e30]: CLÁSICO ESTÁ
+            - generic [ref=e31]: DE VUELTA
+          - paragraph [ref=e32]: Juega los mejores clásicos directamente en tu navegador.Sin descargas. Sin costo. Solo diversión.
+          - generic [ref=e33]:
+            - link "▶ EXPLORAR JUEGOS" [ref=e34] [cursor=pointer]:
+              - /url: /biblioteca
+            - link "✦ CREAR CUENTA" [ref=e35] [cursor=pointer]:
+              - /url: /auth
+          - generic [ref=e36]:
+            - generic [ref=e37]: DESLIZA
+            - generic [ref=e38]: ▼
+        - generic [ref=e39]:
+          - generic [ref=e40]:
+            - generic [ref=e41]: // 01
+            - heading "¿POR QUÉ ARCADE VAULT?" [level=2] [ref=e42]
+          - generic [ref=e44]:
+            - generic [ref=e45]:
+              - generic [ref=e55]: JUEGOS CLÁSICOS
+              - generic [ref=e56]: Arkanoid, Tetris, Snake y muchos más. Los mejores arcades de todos los tiempos en un solo lugar.
+            - generic [ref=e57]:
+              - generic [ref=e65]: 100% GRATIS
+              - generic [ref=e66]: Sin suscripciones, sin pagos ocultos. Todos los juegos disponibles de forma gratuita.
+            - generic [ref=e67]:
+              - generic [ref=e78]: LADDER BOARDS
+              - generic [ref=e79]: Compite con jugadores de todo el mundo. Escala el ranking y demuestra quién es el mejor.
+            - generic [ref=e80]:
+              - generic [ref=e91]: SIEMPRE CRECIENDO
+              - generic [ref=e92]: Agregamos nuevos juegos constantemente. Vuelve seguido, siempre habrá algo nuevo que jugar.
+        - generic [ref=e93]:
+          - generic [ref=e94]:
+            - generic [ref=e95]: // 02
+            - heading "JUEGOS DISPONIBLES AHORA" [level=2] [ref=e96]
+          - generic [ref=e98]:
+            - link "BLOQUE BUSTER ARCADE" [ref=e99] [cursor=pointer]:
+              - /url: /juego/bloque-buster
+              - generic [ref=e102]:
+                - generic [ref=e103]: BLOQUE BUSTER
+                - generic [ref=e104]: ARCADE
+            - link "CAÍDA PUZZLE" [ref=e105] [cursor=pointer]:
+              - /url: /juego/caida
+              - generic [ref=e108]:
+                - generic [ref=e109]: CAÍDA
+                - generic [ref=e110]: PUZZLE
+            - link "SERPENTINA ARCADE" [ref=e111] [cursor=pointer]:
+              - /url: /juego/serpentina
+              - generic [ref=e114]:
+                - generic [ref=e115]: SERPENTINA
+                - generic [ref=e116]: ARCADE
+            - link "••• GLOTÓN ARCADE" [ref=e117] [cursor=pointer]:
+              - /url: /juego/gloton
+              - generic [ref=e118]: •••
+              - generic [ref=e120]:
+                - generic [ref=e121]: GLOTÓN
+                - generic [ref=e122]: ARCADE
+            - link "INVASORES SHOOTER" [ref=e123] [cursor=pointer]:
+              - /url: /juego/invasores
+              - generic [ref=e126]:
+                - generic [ref=e127]: INVASORES
+                - generic [ref=e128]: SHOOTER
+            - link "▲ ROCAS SHOOTER" [ref=e129] [cursor=pointer]:
+              - /url: /juego/rocas
+              - generic [ref=e130]: ▲
+              - generic [ref=e132]:
+                - generic [ref=e133]: ROCAS
+                - generic [ref=e134]: SHOOTER
+          - link "VER TODOS LOS JUEGOS →" [ref=e136] [cursor=pointer]:
+            - /url: /biblioteca
+        - generic [ref=e138]:
+          - generic [ref=e139]:
+            - generic [ref=e140]: 12+
+            - generic [ref=e141]: JUEGOS
+            - generic [ref=e142]: Y CONTANDO
+          - generic [ref=e143]:
+            - generic [ref=e144]: MILES
+            - generic [ref=e145]: DE PARTIDAS
+            - generic [ref=e146]: JUGADAS CADA DÍA
+          - generic [ref=e147]:
+            - generic [ref=e148]: GLOBAL
+            - generic [ref=e149]: RANKING
+            - generic [ref=e150]: COMPITE CON EL MUNDO
+        - generic [ref=e151]:
+          - generic [ref=e152]:
+            - generic [ref=e153]: // 03
+            - heading "ACTIVIDAD EN VIVO" [level=2] [ref=e154]
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - generic [ref=e158]: ▸ ÚLTIMAS PUNTUACIONES
+              - generic [ref=e160]:
+                - generic [ref=e161]:
+                  - generic [ref=e162]: NEONFOX
+                  - generic [ref=e163]: ▸ Caída
+                  - generic [ref=e164]: "+184.220"
+                  - generic [ref=e165]: hace 2 min
+                - generic [ref=e166]:
+                  - generic [ref=e167]: PX_KAI
+                  - generic [ref=e168]: ▸ Glotón
+                  - generic [ref=e169]: "+96.400"
+                  - generic [ref=e170]: hace 5 min
+                - generic [ref=e171]:
+                  - generic [ref=e172]: Z3R0COOL
+                  - generic [ref=e173]: ▸ Invasores
+                  - generic [ref=e174]: "+54.190"
+                  - generic [ref=e175]: hace 8 min
+                - generic [ref=e176]:
+                  - generic [ref=e177]: VAULT_07
+                  - generic [ref=e178]: ▸ Rocas
+                  - generic [ref=e179]: "+41.200"
+                  - generic [ref=e180]: hace 12 min
+                - generic [ref=e181]:
+                  - generic [ref=e182]: GLITCHA
+                  - generic [ref=e183]: ▸ Bloque Buster
+                  - generic [ref=e184]: "+28.450"
+                  - generic [ref=e185]: hace 18 min
+                - generic [ref=e186]:
+                  - generic [ref=e187]: ARKADYA
+                  - generic [ref=e188]: ▸ Serpentina
+                  - generic [ref=e189]: "+7820"
+                  - generic [ref=e190]: hace 24 min
+                - generic [ref=e191]:
+                  - generic [ref=e192]: CYBER_LU
+                  - generic [ref=e193]: ▸ Ranaria
+                  - generic [ref=e194]: "+18.900"
+                  - generic [ref=e195]: hace 31 min
+            - generic [ref=e196]:
+              - generic [ref=e197]:
+                - generic [ref=e198]: ▸ TOP JUGADORES · HOY
+                - link "VER SALÓN →" [ref=e199] [cursor=pointer]:
+                  - /url: /salon
+              - generic [ref=e200]:
+                - generic [ref=e201]:
+                  - generic [ref=e202]: "#01"
+                  - generic [ref=e203]: NEONFOX
+                  - generic [ref=e204]: "312.840"
+                - generic [ref=e205]:
+                  - generic [ref=e206]: "#02"
+                  - generic [ref=e207]: PX_KAI
+                  - generic [ref=e208]: "248.110"
+                - generic [ref=e209]:
+                  - generic [ref=e210]: "#03"
+                  - generic [ref=e211]: M00NRYU
+                  - generic [ref=e212]: "196.720"
+                - generic [ref=e213]:
+                  - generic [ref=e214]: "#04"
+                  - generic [ref=e215]: VAULT_07
+                  - generic [ref=e216]: "154.300"
+                - generic [ref=e217]:
+                  - generic [ref=e218]: "#05"
+                  - generic [ref=e219]: GLITCHA
+                  - generic [ref=e220]: "138.900"
+        - generic [ref=e221]:
+          - generic [ref=e222]:
+            - generic [ref=e223]: // 04
+            - heading "PRECIOS" [level=2] [ref=e224]
+          - generic [ref=e226]:
+            - generic [ref=e227]:
+              - generic [ref=e228]: PLAN ÚNICO
+              - generic [ref=e229]: JUGADOR VAULT
+              - generic [ref=e230]:
+                - generic [ref=e231]: $0
+                - generic [ref=e232]: / SIEMPRE
+              - generic [ref=e233]: SIN TRUCOS · SIN LETRA PEQUEÑA
+              - list [ref=e234]:
+                - listitem [ref=e235]: ✔ Acceso a todos los juegos
+                - listitem [ref=e236]: ✔ Ranking global y salón de la fama
+                - listitem [ref=e237]: ✔ Sin anuncios entre partidas
+                - listitem [ref=e238]: ✔ Guarda tus puntuaciones
+                - listitem [ref=e239]: ✔ Nuevos juegos cada mes
+                - listitem [ref=e240]: ✔ Funciona en cualquier navegador
+              - link "EMPEZAR GRATIS →" [ref=e241] [cursor=pointer]:
+                - /url: /auth
+              - generic [ref=e242]: No pedimos tarjeta. Nunca lo haremos.
+              - generic [ref=e243]: FREEPLAY
+            - generic [ref=e245]:
+              - generic [ref=e246]:
+                - generic [ref=e247]: ¿REALMENTE ES GRATIS?
+                - generic [ref=e248]: Sí. Arcade Vault es un proyecto sin fines de lucro hecho por amor a los clásicos. No hay versión "premium" escondida.
+              - generic [ref=e249]:
+                - generic [ref=e250]: ¿NECESITO CREAR CUENTA?
+                - generic [ref=e251]: No. Puedes jugar como invitado. Si quieres guardar tu puntuación y aparecer en el ranking, regístrate en 10 segundos.
+              - generic [ref=e252]:
+                - generic [ref=e253]: ¿CÓMO SOBREVIVEN SIN COBRAR?
+                - generic [ref=e254]: Es un proyecto comunitario. Si te gusta, compártelo. Esa es toda la moneda que aceptamos.
+        - generic [ref=e255]:
+          - heading "¿LISTO PARA JUGAR?" [level=2] [ref=e256]
+          - link "INSERTAR MONEDA →" [ref=e257] [cursor=pointer]:
+            - /url: /biblioteca
+          - generic [ref=e258]: Gratis. Sin registro obligatorio. Empieza en segundos.
+    - contentinfo [ref=e259]: © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
+  - button "Open Next.js Dev Tools" [ref=e265] [cursor=pointer]

@@ -87,18 +87,18 @@ Convenciones:
 
 ## Criterios de aceptación
 
-- [ ] `app/page.tsx` muestra el catálogo de 8 juegos mock con buscador y chips de categoría funcionales (filtran el grid).
-- [ ] Cada `GameCard` navega a `app/juego/[id]/page.tsx` con la información correcta del juego (título, descripción, mejor puntuación).
-- [ ] `app/juego/[id]/page.tsx` muestra una tabla de leaderboard generada con `seededScores` para ese juego.
-- [ ] Desde el detalle se puede entrar a `app/juego/[id]/jugar/page.tsx`.
+- [x ] `app/page.tsx` muestra el catálogo de 8 juegos mock con buscador y chips de categoría funcionales (filtran el grid).
+- [ x] Cada `GameCard` navega a `app/juego/[id]/page.tsx` con la información correcta del juego (título, descripción, mejor puntuación).
+- [x ] `app/juego/[id]/page.tsx` muestra una tabla de leaderboard generada con `seededScores` para ese juego.
+- [ x] Desde el detalle se puede entrar a `app/juego/[id]/jugar/page.tsx`.
 - [ ] En el Reproductor, la puntuación sube sola con un timer simulado, el botón de pausa detiene el incremento, y el botón "Fin" abre el modal de game over.
-- [ ] Guardar la puntuación en el modal de game over la persiste en `localStorage` (`av_scores`) sin recargar la página.
-- [ ] `app/auth/page.tsx` permite "iniciar sesión" con cualquier usuario/contraseña y redirige a Biblioteca, mostrando el nombre de usuario en el Nav.
-- [ ] El botón "Jugar como invitado" en Auth entra sin requerir credenciales.
-- [ ] `app/salon/page.tsx` muestra el podio top 3 y una tabla de posiciones, resaltando la fila del usuario actual si guardó alguna puntuación.
-- [ ] El Nav muestra menú hamburguesa funcional en viewport móvil (< 840px) y los links normales en desktop.
-- [ ] No hay errores en la consola del navegador al navegar entre las 5 pantallas.
-- [ ] `npm run build` (o `next build`) compila sin errores de TypeScript.
+- [ x] Guardar la puntuación en el modal de game over la persiste en `localStorage` (`av_scores`) sin recargar la página.
+- [ x] `app/auth/page.tsx` permite "iniciar sesión" con cualquier usuario/contraseña y redirige a Biblioteca, mostrando el nombre de usuario en el Nav.
+- [ x] El botón "Jugar como invitado" en Auth entra sin requerir credenciales.
+- [ x] `app/salon/page.tsx` muestra el podio top 3 y una tabla de posiciones, resaltando la fila del usuario actual si guardó alguna puntuación.
+- [ x] El Nav muestra menú hamburguesa funcional en viewport móvil (< 840px) y los links normales en desktop.
+- [ x] No hay errores en la consola del navegador al navegar entre las 5 pantallas.
+- [ x] `npm run build` (o `next build`) compila sin errores de TypeScript.
 
 ## Decisiones tomadas y descartadas
 

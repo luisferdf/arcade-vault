@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { CATS, GAMES } from "@/lib/games";
-import { GameCard } from "./_components/GameCard";
+import { GameCard } from "../_components/GameCard";
 
-export default function Home() {
+export default function Biblioteca() {
   const [q, setQ] = useState("");
   const [cat, setCat] = useState<(typeof CATS)[number]>("TODOS");
 

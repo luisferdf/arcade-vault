@@ -1,6 +1,6 @@
 # SPEC 04 — Setup de infraestructura Supabase
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** Ninguno (usa el proyecto Supabase ya referenciado en `.mcp.json`, sin dependencias de specs anteriores)
 > **Fecha:** 2026-08-10
 > **Objetivo:** Dejar el proyecto conectado a Supabase (SDK, clientes de browser/servidor y refresco de sesión vía `proxy.ts`) sin implementar ninguna funcionalidad de auth ni de datos todavía.
@@ -43,17 +43,17 @@ Esta spec no introduce estructuras de datos nuevas (no se crean tablas ni tipos 
 
 ## Criterios de aceptación
 
-- [ ] `@supabase/supabase-js` y `@supabase/ssr` están en `dependencies` de `package.json`.
-- [ ] `lib/supabase/client.ts` exporta `createClient()` usando `createBrowserClient`.
-- [ ] `lib/supabase/server.ts` exporta `createClient()` async usando `createServerClient` y `cookies()` de `next/headers`.
-- [ ] `lib/supabase/proxy.ts` exporta `updateSession(request)` que llama a `supabase.auth.getClaims()` y devuelve la respuesta con cookies refrescadas.
-- [ ] `proxy.ts` existe en la raíz del proyecto, exporta `proxy()` (no `middleware()`) y usa `updateSession`.
-- [ ] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sin valores.
-- [ ] `.env.local` contiene los valores reales del proyecto `zxzqcdscjgwkponoqpiv` y no aparece en `git status`.
-- [ ] `tsc --noEmit` no reporta errores en todo el proyecto.
-- [ ] `npm run build` completa sin errores.
-- [ ] Las 8 pantallas existentes (Biblioteca, Detalle, Reproductor, Auth, Salón, Home, About, redirect `/home`) funcionan exactamente igual que antes de esta spec, sin errores en consola del navegador.
-- [ ] Ningún archivo de `app/` importa `lib/supabase/*` todavía (la infraestructura queda lista pero sin usar).
+- [x] `@supabase/supabase-js` y `@supabase/ssr` están en `dependencies` de `package.json`.
+- [x] `lib/supabase/client.ts` exporta `createClient()` usando `createBrowserClient`.
+- [x] `lib/supabase/server.ts` exporta `createClient()` async usando `createServerClient` y `cookies()` de `next/headers`.
+- [x] `lib/supabase/proxy.ts` exporta `updateSession(request)` que llama a `supabase.auth.getClaims()` y devuelve la respuesta con cookies refrescadas.
+- [x] `proxy.ts` existe en la raíz del proyecto, exporta `proxy()` (no `middleware()`) y usa `updateSession`.
+- [x] `.env.example` contiene `NEXT_PUBLIC_SUPABASE_URL` y `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` sin valores.
+- [x] `.env.local` contiene los valores reales del proyecto `zxzqcdscjgwkponoqpiv` y no aparece en `git status`.
+- [x] `tsc --noEmit` no reporta errores en todo el proyecto.
+- [x] `npm run build` completa sin errores.
+- [x] Las 8 pantallas existentes (Biblioteca, Detalle, Reproductor, Auth, Salón, Home, About, redirect `/home`) funcionan exactamente igual que antes de esta spec, sin errores en consola del navegador.
+- [x] Ningún archivo de `app/` importa `lib/supabase/*` todavía (la infraestructura queda lista pero sin usar).
 
 ## Decisiones tomadas y descartadas
 

@@ -531,3 +531,118 @@ function drawGame(state: GameState, ctx: CanvasRenderingContext2D) {
 
   drawHUD(state, ctx);
 }
+
+// ── API pública ───────────────────────────────────────────────────────────────
+export interface AsteroidsCallbacks {
+  onScoreChange: (score: number) => void;
+  onLivesChange: (lives: number) => void;
+  onLevelChange: (level: number) => void;
+  onGameOver: (finalScore: number) => void;
+}
+
+export class AsteroidsGame {
+  private ctx: CanvasRenderingContext2D;
+  private callbacks: AsteroidsCallbacks;
+  private state: GameState;
+  private keys: KeyState = {};
+  private justPressed: KeyState = {};
+  private rafId: number | null = null;
+  private lastTime: number | null = null;
+  private gameOverFired = false;
+
+  private prevScore: number;
+  private prevLives: number;
+  private prevLevel: number;
+
+  private handleKeyDown = (e: KeyboardEvent) => {
+    if (!this.keys[e.code]) this.justPressed[e.code] = true;
+    this.keys[e.code] = true;
+  };
+
+  private handleKeyUp = (e: KeyboardEvent) => {
+    this.keys[e.code] = false;
+  };
+
+  private loop = (ts: number) => {
+    const dt =
+      this.lastTime === null ? 0 : Math.min((ts - this.lastTime) / 1000, 0.05);
+    this.lastTime = ts;
+
+    const shootPressed = this.pressed("Space");
+    updateGame(this.state, dt, this.keys, shootPressed);
+    drawGame(this.state, this.ctx);
+    this.emitChanges();
+
+    if (this.state.state === "gameover") {
+      if (!this.gameOverFired) {
+        this.gameOverFired = true;
+        this.callbacks.onGameOver(this.state.score);
+      }
+      return;
+    }
+
+    this.rafId = requestAnimationFrame(this.loop);
+  };
+
+  constructor(ctx: CanvasRenderingContext2D, callbacks: AsteroidsCallbacks) {
+    this.ctx = ctx;
+    this.callbacks = callbacks;
+    this.state = createGameState();
+    this.prevScore = this.state.score;
+    this.prevLives = this.state.lives;
+    this.prevLevel = this.state.level;
+  }
+
+  private pressed(code: string): boolean {
+    const val = !!this.justPressed[code];
+    this.justPressed[code] = false;
+    return val;
+  }
+
+  private emitChanges() {
+    if (this.state.score !== this.prevScore) {
+      this.prevScore = this.state.score;
+      this.callbacks.onScoreChange(this.state.score);
+    }
+    if (this.state.lives !== this.prevLives) {
+      this.prevLives = this.state.lives;
+      this.callbacks.onLivesChange(this.state.lives);
+    }
+    if (this.state.level !== this.prevLevel) {
+      this.prevLevel = this.state.level;
+      this.callbacks.onLevelChange(this.state.level);
+    }
+  }
+
+  start(): void {
+    window.addEventListener("keydown", this.handleKeyDown);
+    window.addEventListener("keyup", this.handleKeyUp);
+    this.callbacks.onScoreChange(this.state.score);
+    this.callbacks.onLivesChange(this.state.lives);
+    this.callbacks.onLevelChange(this.state.level);
+    this.lastTime = null;
+    this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  pause(): void {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  resume(): void {
+    if (this.rafId !== null || this.gameOverFired) return;
+    this.lastTime = null;
+    this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  destroy(): void {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+    window.removeEventListener("keydown", this.handleKeyDown);
+    window.removeEventListener("keyup", this.handleKeyUp);
+  }
+}

@@ -64,6 +64,11 @@ export default function GamePlayerPage() {
     };
   }, [isAsteroids]);
 
+  useEffect(() => {
+    if (!isAsteroids || !over) return;
+    asteroidsRef.current?.pause();
+  }, [over, isAsteroids]);
+
   if (!game) {
     return (
       <div className="av-player fade-in">
@@ -86,6 +91,16 @@ export default function GamePlayerPage() {
   }
 
   const endGame = () => setOver(true);
+  const togglePause = () => {
+    setPaused((p) => {
+      const next = !p;
+      if (isAsteroids) {
+        if (next) asteroidsRef.current?.pause();
+        else asteroidsRef.current?.resume();
+      }
+      return next;
+    });
+  };
   const restart = () => {
     setScore(0);
     setLevel(1);
@@ -122,7 +137,7 @@ export default function GamePlayerPage() {
           </div>
         </div>
         <div className="hud-actions">
-          <button className="btn yellow" onClick={() => setPaused((p) => !p)}>
+          <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>
           <button className="btn magenta" onClick={endGame}>

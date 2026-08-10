@@ -47,7 +47,14 @@ export default function GamePlayerPage() {
     if (!isAsteroids) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!ctx) return;
+    if (!canvas || !ctx) return;
+
+    // Backing store a resolución nativa (nitidez en pantallas DPR > 1);
+    // el motor sigue dibujando en coordenadas lógicas 800×600.
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = 800 * dpr;
+    canvas.height = 600 * dpr;
+    ctx.scale(dpr, dpr);
 
     const instance = new AsteroidsGame(ctx, {
       onScoreChange: setScore,

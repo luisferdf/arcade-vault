@@ -21,6 +21,16 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
 
+// Teclas del juego cuyo comportamiento por defecto del navegador (scroll de la
+// página) debe bloquearse mientras el motor está activo.
+const CONTROL_KEYS = new Set([
+  "ArrowLeft",
+  "ArrowRight",
+  "ArrowUp",
+  "ArrowDown",
+  "Space",
+]);
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 const POWERUP_DROP_CHANCE = 0.15;
 const POWERUP_DURATION = 5;
@@ -555,6 +565,7 @@ export class AsteroidsGame {
   private prevLevel: number;
 
   private handleKeyDown = (e: KeyboardEvent) => {
+    if (CONTROL_KEYS.has(e.code)) e.preventDefault();
     if (!this.keys[e.code]) this.justPressed[e.code] = true;
     this.keys[e.code] = true;
   };

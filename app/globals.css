@@ -1025,6 +1025,53 @@ a {
   margin: 32px auto;
   padding: 0 24px 64px;
 }
+
+/* Reproductor de Asteroides: todo cabe en el viewport, sin scroll de página. */
+body.av-fullscreen-game {
+  overflow: hidden;
+  height: 100dvh;
+}
+body.av-fullscreen-game #root {
+  height: 100dvh;
+}
+body.av-fullscreen-game footer {
+  display: none;
+}
+body.av-fullscreen-game .av-main {
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+body.av-fullscreen-game .av-player {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 12px auto;
+  padding: 0 24px;
+}
+body.av-fullscreen-game .player-hud {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+}
+body.av-fullscreen-game .crt {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+body.av-fullscreen-game .crt-screen {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 4 / 3;
+  margin: 0 auto;
+}
+body.av-fullscreen-game .crt-bottom {
+  flex: 0 0 auto;
+}
 .player-hud {
   display: flex;
   gap: 16px;

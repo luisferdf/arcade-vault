@@ -30,6 +30,12 @@ export default function GamePlayerPage() {
   }, []);
 
   useEffect(() => {
+    if (!isAsteroids) return;
+    document.body.classList.add("av-fullscreen-game");
+    return () => document.body.classList.remove("av-fullscreen-game");
+  }, [isAsteroids]);
+
+  useEffect(() => {
     if (over || paused || isAsteroids) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),

@@ -1,6 +1,6 @@
 # SPEC 06 — Leaderboard y catálogo de juegos en Supabase
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 04-supabase-setup (clientes de Supabase ya configurados), 05-juego-asteroides (motor real de Asteroides)
 > **Fecha:** 2026-08-11
 > **Objetivo:** Migrar el catálogo de juegos (`lib/games.ts`) y las puntuaciones (`localStorage`) a tablas reales de Supabase (`games` y `scores`), con leaderboard global y por juego calculados desde datos reales, sin requerir login todavía.

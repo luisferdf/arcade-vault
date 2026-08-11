@@ -1,25 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import type { Game, ScoreEntry } from "@/lib/games-types";
 
-export interface Game {
-  id: string;
-  title: string;
-  short: string;
-  long: string;
-  cat: "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
-  cover: string;
-  color: "cyan" | "magenta" | "yellow" | "green";
-  best: number;
-  plays: string;
-}
-
-export interface ScoreEntry {
-  rank: number;
-  name: string;
-  score: number;
-  date: string;
-}
-
-export const CATS = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"] as const;
+export type { Game, ScoreEntry } from "@/lib/games-types";
+export { CATS } from "@/lib/games-types";
 
 function formatPlays(count: number): string {
   if (count >= 1000) return (count / 1000).toFixed(1) + "K";
@@ -36,7 +19,7 @@ function formatDate(createdAt: string): string {
 export async function getGames(): Promise<Game[]> {
   const supabase = await createClient();
   const [{ data: games }, { data: scores }] = await Promise.all([
-    supabase.from("games").select("*").order("id"),
+    supabase.from("games").select("*").eq("available", true).order("id"),
     supabase.from("scores").select("game_id, score"),
   ]);
 
@@ -60,6 +43,7 @@ export async function getGameById(id: string): Promise<Game | null> {
     .from("games")
     .select("*")
     .eq("id", id)
+    .eq("available", true)
     .maybeSingle();
   if (!game) return null;
 
@@ -80,8 +64,9 @@ export async function getTopScoresByGame(
   const supabase = await createClient();
   const { data } = await supabase
     .from("scores")
-    .select("name, score, created_at")
+    .select("name, score, created_at, game_id, games!inner(title, available)")
     .eq("game_id", gameId)
+    .eq("games.available", true)
     .order("score", { ascending: false })
     .limit(limit);
 
@@ -90,6 +75,8 @@ export async function getTopScoresByGame(
     name: s.name,
     score: s.score,
     date: formatDate(s.created_at),
+    gameId: s.game_id,
+    gameTitle: (s.games as unknown as { title: string }).title,
   }));
 }
 
@@ -97,7 +84,8 @@ export async function getGlobalTopScores(limit = 30): Promise<ScoreEntry[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("scores")
-    .select("name, score, created_at")
+    .select("name, score, created_at, game_id, games!inner(title, available)")
+    .eq("games.available", true)
     .order("score", { ascending: false })
     .limit(limit);
 
@@ -106,5 +94,7 @@ export async function getGlobalTopScores(limit = 30): Promise<ScoreEntry[]> {
     name: s.name,
     score: s.score,
     date: formatDate(s.created_at),
+    gameId: s.game_id,
+    gameTitle: (s.games as unknown as { title: string }).title,
   }));
 }

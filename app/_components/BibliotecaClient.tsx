@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CATS, type Game } from "@/lib/games";
+import { CATS, type Game } from "@/lib/games-types";
 import { GameCard } from "./GameCard";
 
 export function BibliotecaClient({ games }: { games: Game[] }) {

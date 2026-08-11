@@ -1,24 +1,18 @@
-export interface StoredScoreEntry {
-  game: string;
-  score: number;
+import { createClient } from "@/lib/supabase/client";
+
+export interface SaveScoreInput {
+  gameId: string;
   name: string;
-  at: number;
+  score: number;
 }
 
-const STORAGE_KEY = "av_scores";
-
-export function getStoredScores(): StoredScoreEntry[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]");
-  } catch {
-    return [];
-  }
-}
-
-export function addStoredScore(entry: Omit<StoredScoreEntry, "at">): void {
-  if (typeof window === "undefined") return;
-  const all = getStoredScores();
-  all.push({ ...entry, at: Date.now() });
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+export async function saveScore({
+  gameId,
+  name,
+  score,
+}: SaveScoreInput): Promise<void> {
+  const supabase = createClient();
+  await supabase
+    .from("scores")
+    .insert({ game_id: gameId, user_id: null, name, score });
 }

@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { GAMES, seededScores } from "@/lib/games";
-
-function hashSeed(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return h;
-}
+import { getGameById, getTopScoresByGame } from "@/lib/games";
 
 export default async function GameDetailPage(props: PageProps<"/juego/[id]">) {
   const { id } = await props.params;
-  const game = GAMES.find((g) => g.id === id);
+  const game = await getGameById(id);
   if (!game) notFound();
 
-  const scores = seededScores(hashSeed(game.id));
+  const scores = await getTopScoresByGame(game.id, 10);
 
   return (
     <div className="av-detail fade-in">
@@ -54,7 +48,10 @@ export default async function GameDetailPage(props: PageProps<"/juego/[id]">) {
       <div className="leaderboard" style={{ gridColumn: "1 / -1" }}>
         <h3>LEADERBOARD</h3>
         {scores.map((s) => (
-          <div key={s.rank} className={"lb-row" + (s.rank <= 3 ? ` top${s.rank}` : "")}>
+          <div
+            key={s.rank}
+            className={"lb-row" + (s.rank <= 3 ? ` top${s.rank}` : "")}
+          >
             <div className="rk">#{s.rank}</div>
             <div className="pl">{s.name}</div>
             <div className="sc">{s.score.toLocaleString("es-ES")}</div>

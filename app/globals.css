@@ -1541,6 +1541,10 @@ body.av-fullscreen-game .crt-bottom {
   justify-content: center;
   margin-bottom: 22px;
 }
+.hall-tabs .chip {
+  text-decoration: none;
+  display: inline-block;
+}
 .podium {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1fr;
@@ -1619,6 +1623,13 @@ body.av-fullscreen-game .crt-bottom {
   font-size: 13px;
   gap: 10px;
 }
+.hall-table.with-game .th,
+.hall-table.with-game .tr {
+  grid-template-columns: 70px 1fr 1fr 1fr 140px;
+}
+.hall-table .tr .gm {
+  color: var(--ink-dim);
+}
 .hall-table .th {
   font-family: var(--pixel);
   font-size: 10px;
@@ -1694,6 +1705,10 @@ body.av-fullscreen-game .crt-bottom {
     grid-template-columns: 50px 1fr 90px 90px;
     font-size: 12px;
     padding: 10px 12px;
+  }
+  .hall-table.with-game .th,
+  .hall-table.with-game .tr {
+    grid-template-columns: 50px 1fr 1fr 90px 90px;
   }
   .av-grid {
     padding: 0 16px;

@@ -1,6 +1,6 @@
 # SPEC 05 — Juego real: Asteroides
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 01-mvp-visual (pantallas del MVP, especialmente Biblioteca y el Reproductor en `app/juego/[id]/jugar/page.tsx`)
 > **Fecha:** 2026-08-10
 > **Objetivo:** Agregar "Asteroides" como juego nuevo y jugable en el catálogo (id `asteroides`), con motor real adaptado de `references/started-games/02-asteroids/game.js`, integrado al HUD y la pausa ya existentes del Reproductor. `rocas` queda intacta y sin relación con esta spec.

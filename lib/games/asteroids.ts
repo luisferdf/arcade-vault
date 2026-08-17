@@ -2,6 +2,8 @@
 // Sin document.getElementById ni canvas global: W/H son la resolución lógica fija
 // y el CanvasRenderingContext2D se recibe como parámetro en cada draw().
 
+import type { ArcadeGame, GameCallbacks } from "./engine";
+
 export const W = 800;
 export const H = 600;
 
@@ -543,14 +545,9 @@ function drawGame(state: GameState, ctx: CanvasRenderingContext2D) {
 }
 
 // ── API pública ───────────────────────────────────────────────────────────────
-export interface AsteroidsCallbacks {
-  onScoreChange: (score: number) => void;
-  onLivesChange: (lives: number) => void;
-  onLevelChange: (level: number) => void;
-  onGameOver: (finalScore: number) => void;
-}
+export type AsteroidsCallbacks = GameCallbacks;
 
-export class AsteroidsGame {
+export class AsteroidsGame implements ArcadeGame {
   private ctx: CanvasRenderingContext2D;
   private callbacks: AsteroidsCallbacks;
   private state: GameState;

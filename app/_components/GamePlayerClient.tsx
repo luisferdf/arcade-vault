@@ -1,26 +1,31 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "@/lib/games";
 import { getStoredUser } from "@/lib/auth";
 import { saveScore } from "@/lib/scores";
-import { AsteroidsGame } from "@/lib/games/asteroids";
+import type { ArcadeGame } from "@/lib/games/engine";
+import { getEngine } from "@/lib/games/registry";
 
 export function GamePlayerClient({ game }: { game: Game | null }) {
   const router = useRouter();
-  const isAsteroids = game?.id === "asteroides";
+  // Motor real si el juego está registrado en lib/games/registry.ts; si no, arena simulada.
+  const engine = getEngine(game?.id);
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
   const [level, setLevel] = useState(1);
+  const [stats, setStats] = useState<Record<string, number>>({});
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
   const [name, setName] = useState("INVITADO");
   const [saved, setSaved] = useState(false);
+  // Cambia en cada partida nueva: fuerza a recrear la instancia del motor.
+  const [runId, setRunId] = useState(0);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const asteroidsRef = useRef<AsteroidsGame | null>(null);
+  const engineRef = useRef<ArcadeGame | null>(null);
 
   useEffect(() => {
     const user = getStoredUser();
@@ -28,57 +33,60 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
   }, []);
 
   useEffect(() => {
-    if (!isAsteroids) return;
+    if (!engine) return;
     document.body.classList.add("av-fullscreen-game");
     return () => document.body.classList.remove("av-fullscreen-game");
-  }, [isAsteroids]);
+  }, [engine]);
 
   useEffect(() => {
-    if (over || paused || isAsteroids) return;
+    if (over || paused || engine) return;
     const t = setInterval(
       () => setScore((s) => s + Math.floor(10 + Math.random() * 90)),
       220,
     );
     return () => clearInterval(t);
-  }, [over, paused, isAsteroids]);
+  }, [over, paused, engine]);
 
   useEffect(() => {
-    if (isAsteroids) return;
+    if (engine) return;
     if (score > 0 && score % 2500 < 100) setLevel((l) => l + 1);
-  }, [score, isAsteroids]);
+  }, [score, engine]);
 
   useEffect(() => {
-    if (!isAsteroids) return;
+    if (!engine) return;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;
 
     // Backing store a resolución nativa (nitidez en pantallas DPR > 1);
-    // el motor sigue dibujando en coordenadas lógicas 800×600.
+    // el motor sigue dibujando en las coordenadas lógicas que declara.
     const dpr = window.devicePixelRatio || 1;
-    canvas.width = 800 * dpr;
-    canvas.height = 600 * dpr;
-    ctx.scale(dpr, dpr);
+    canvas.width = engine.width * dpr;
+    canvas.height = engine.height * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const instance = new AsteroidsGame(ctx, {
+    const instance = engine.create(ctx, {
       onScoreChange: setScore,
       onLivesChange: setLives,
       onLevelChange: setLevel,
       onGameOver: () => setOver(true),
+      onStatChange: (key, value) =>
+        setStats((prev) => ({ ...prev, [key]: value })),
     });
-    asteroidsRef.current = instance;
+    engineRef.current = instance;
     instance.start();
 
     return () => {
       instance.destroy();
-      asteroidsRef.current = null;
+      engineRef.current = null;
     };
-  }, [isAsteroids]);
+    // runId fuerza una instancia nueva al pulsar "JUGAR DE NUEVO".
+  }, [engine, runId]);
 
   useEffect(() => {
-    if (!isAsteroids || !over) return;
-    asteroidsRef.current?.pause();
-  }, [over, isAsteroids]);
+    if (!engine || !over) return;
+    engineRef.current?.pause();
+  }, [over, engine]);
 
   if (!game) {
     return (
@@ -105,19 +113,21 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
   const togglePause = () => {
     setPaused((p) => {
       const next = !p;
-      if (isAsteroids) {
-        if (next) asteroidsRef.current?.pause();
-        else asteroidsRef.current?.resume();
-      }
+      if (next) engineRef.current?.pause();
+      else engineRef.current?.resume();
       return next;
     });
   };
   const restart = () => {
     setScore(0);
+    setLives(3);
     setLevel(1);
+    setStats({});
     setPaused(false);
     setOver(false);
     setSaved(false);
+    // Destruye la instancia actual y monta una nueva (ver efecto con [engine, runId]).
+    setRunId((r) => r + 1);
   };
   const handleSaveScore = async () => {
     await saveScore({ gameId: game.id, name, score });
@@ -138,14 +148,24 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
             <div className="l">Puntuación</div>
             <div className="v">{score.toLocaleString("es-ES")}</div>
           </div>
-          <div className="hud-stat lives">
-            <div className="l">Vidas</div>
-            <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
-          </div>
+          {engine?.usesLives !== false && (
+            <div className="hud-stat lives">
+              <div className="l">Vidas</div>
+              <div className="v">{"♥ ".repeat(lives).trim() || "—"}</div>
+            </div>
+          )}
           <div className="hud-stat level">
             <div className="l">Nivel</div>
             <div className="v">{String(level).padStart(2, "0")}</div>
           </div>
+          {engine?.extraStats?.map((stat) => (
+            <div className="hud-stat" key={stat.key}>
+              <div className="l">{stat.label}</div>
+              <div className="v">
+                {(stats[stat.key] ?? 0).toLocaleString("es-ES")}
+              </div>
+            </div>
+          ))}
         </div>
         <div className="hud-actions">
           <button className="btn yellow" onClick={togglePause}>
@@ -164,13 +184,22 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
       </div>
 
       <div className="crt">
-        <div className="crt-screen">
-          {isAsteroids ? (
+        <div
+          className="crt-screen"
+          style={
+            engine
+              ? ({
+                  "--arcade-aspect": `${engine.width} / ${engine.height}`,
+                } as CSSProperties)
+              : undefined
+          }
+        >
+          {engine ? (
             <canvas
               ref={canvasRef}
-              width={800}
-              height={600}
-              className="asteroids-canvas"
+              width={engine.width}
+              height={engine.height}
+              className="arcade-canvas"
             />
           ) : (
             <div className="game-arena">

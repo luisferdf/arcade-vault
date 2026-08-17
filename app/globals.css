@@ -1026,7 +1026,7 @@ a {
   padding: 0 24px 64px;
 }
 
-/* Reproductor de Asteroides: todo cabe en el viewport, sin scroll de página. */
+/* Reproductor con motor real: todo cabe en el viewport, sin scroll de página. */
 body.av-fullscreen-game {
   overflow: hidden;
   height: 100dvh;
@@ -1066,7 +1066,8 @@ body.av-fullscreen-game .crt-screen {
   min-height: 0;
   width: auto;
   max-width: 100%;
-  aspect-ratio: 4 / 3;
+  /* El Reproductor inyecta --arcade-aspect con la resolución lógica del motor. */
+  aspect-ratio: var(--arcade-aspect, 4 / 3);
   margin: 0 auto;
 }
 body.av-fullscreen-game .crt-bottom {
@@ -1205,7 +1206,7 @@ body.av-fullscreen-game .crt-bottom {
   box-shadow: 0 0 6px var(--green);
 }
 
-.asteroids-canvas {
+.arcade-canvas {
   position: absolute;
   inset: 0;
   width: 100%;

@@ -1,5 +1,6 @@
 import type { GameEngineEntry } from "./engine";
 import { AsteroidsGame, W as ASTEROIDS_W, H as ASTEROIDS_H } from "./asteroids";
+import { TetrisGame, W as TETRIS_W, H as TETRIS_H } from "./tetris";
 
 /**
  * Juegos con motor real, indexados por el `id` de la tabla `games` de Supabase.
@@ -14,6 +15,13 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     height: ASTEROIDS_H,
     usesLives: true,
     create: (ctx, callbacks) => new AsteroidsGame(ctx, callbacks),
+  },
+  tetris: {
+    width: TETRIS_W,
+    height: TETRIS_H,
+    usesLives: false,
+    extraStats: [{ key: "lines", label: "LÍNEAS" }],
+    create: (ctx, callbacks) => new TetrisGame(ctx, callbacks),
   },
 };
 

@@ -1057,21 +1057,31 @@ body.av-fullscreen-game .player-hud {
 body.av-fullscreen-game .crt {
   flex: 1 1 auto;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  /* Fila 1 = pantalla de juego (crece para llenar el espacio disponible),
+     fila 2 = crt-bottom (franja de LED, tamaño fijo). Evita el circuito
+     ambiguo de "width: fit-content" + "aspect-ratio" anidados en flex, que
+     en algunos navegadores subestima el alto disponible y corta el tablero. */
+  grid-template-rows: 1fr auto;
   padding: 14px;
 }
 body.av-fullscreen-game .crt-screen {
-  flex: 1 1 auto;
-  min-height: 0;
+  /* Altura definida = 100% de la fila del grid (fija el eje principal);
+     el ancho queda "auto" y lo deriva --arcade-aspect a partir de esa
+     altura. Si el ancho resultante excede la celda, max-width lo recorta
+     y el navegador reajusta la altura para conservar el ratio (mismo
+     algoritmo que "object-fit: contain"), maximizando el tablero sin
+     recortarlo, sea cual sea la relación de aspecto del motor. */
   width: auto;
+  height: 100%;
   max-width: 100%;
+  min-height: 0;
   /* El Reproductor inyecta --arcade-aspect con la resolución lógica del motor. */
   aspect-ratio: var(--arcade-aspect, 4 / 3);
-  margin: 0 auto;
+  justify-self: center;
 }
 body.av-fullscreen-game .crt-bottom {
-  flex: 0 0 auto;
+  min-width: 0;
 }
 .player-hud {
   display: flex;
@@ -1141,8 +1151,14 @@ body.av-fullscreen-game .crt-bottom {
   position: relative;
   aspect-ratio: 4 / 3;
   background: #000;
-  border-radius: 12px / 28px;
+  border-radius: 8px;
   overflow: hidden;
+  /* El padding empuja el contenido (canvas, absolute + inset:0) hacia
+     adentro de la esquina redondeada -- sin esto, el border-radius recorta
+     píxeles del juego que llegan hasta el borde (ej. las columnas 0/9 y
+     filas 0/19 de Tetris). Igual al radio para garantizar que ningún
+     píxel de contenido caiga dentro del arco de la esquina. */
+  padding: 8px;
   box-shadow:
     inset 0 0 60px rgba(0, 0, 0, 0.9),
     inset 0 0 20px rgba(0, 245, 255, 0.15);

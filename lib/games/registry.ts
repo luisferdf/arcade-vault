@@ -2,6 +2,7 @@ import type { GameEngineEntry } from "./engine";
 import { AsteroidsGame, W as ASTEROIDS_W, H as ASTEROIDS_H } from "./asteroids";
 import { TetrisGame, W as TETRIS_W, H as TETRIS_H } from "./tetris";
 import { ArkanoidGame, W as ARKANOID_W, H as ARKANOID_H } from "./arkanoid";
+import { SnakeGame, W as SNAKE_W, H as SNAKE_H } from "./snake";
 
 /**
  * Juegos con motor real, indexados por el `id` de la tabla `games` de Supabase.
@@ -29,6 +30,12 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     height: ARKANOID_H,
     usesLives: true,
     create: (ctx, callbacks) => new ArkanoidGame(ctx, callbacks),
+  },
+  snake: {
+    width: SNAKE_W,
+    height: SNAKE_H,
+    usesLives: false,
+    create: (ctx, callbacks) => new SnakeGame(ctx, callbacks),
   },
 };
 

@@ -1,6 +1,6 @@
 # SPEC 08 — Juego real: Arkanoid
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 06-leaderboard-catalogo-supabase (tablas `games`/`scores`, `getGames`/`getGameById`/`saveScore`), 07-juego-tetris (base genérica de motores `lib/games/engine.ts` + `lib/games/registry.ts`)
 > **Fecha:** 2026-08-18
 > **Objetivo:** Agregar "Arkanoid" como juego nuevo y jugable en el catálogo (id `arkanoid`), con motor real adaptado de `references/started-games/04-arkanoid/game.js`, registrado en `lib/games/registry.ts` e integrado al HUD y la pausa ya existentes del Reproductor. `bloque-buster` queda intacto y sin relación con esta spec.
@@ -114,25 +114,25 @@ No se introducen tablas ni columnas nuevas: la puntuación sigue insertándose e
 
 ## Criterios de aceptación
 
-- [ ] `games` incluye una fila con `id: "arkanoid"`, categoría `ARCADE`, `available: true`, y el juego aparece en `/biblioteca` filtrable por búsqueda y por categoría.
-- [ ] `/juego/arkanoid` (Detalle) muestra la info real del juego y un leaderboard (top 10) vía `getTopScoresByGame`, inicialmente vacío.
-- [ ] En `/juego/arkanoid/jugar`, el `game-arena` simulado es reemplazado por un `<canvas>` que corre el motor real de `lib/games/arkanoid.ts`, registrado en `lib/games/registry.ts`.
-- [ ] La paleta se mueve tanto con el mouse como con las flechas ← →.
-- [ ] La pelota rebota correctamente contra paredes, paleta y bloques, y rompe un bloque por colisión (10 puntos cada uno).
-- [ ] Los 5 niveles cargan con sus patrones de bloques y velocidades correspondientes, en el mismo orden que el original.
-- [ ] Perder las 3 vidas dispara `onGameOver` con el score final y abre el modal de fin automáticamente.
-- [ ] Completar el nivel 5 (limpiar todos los bloques) también dispara `onGameOver` con el score final y abre el mismo modal de fin, sin mensaje ni estilo distinto al de la derrota.
-- [ ] El HUD superior del Reproductor (puntuación, vidas, nivel) se actualiza en tiempo real, coexistiendo con el HUD propio dibujado dentro del canvas, ambos mostrando los mismos valores.
-- [ ] El botón PAUSA del Reproductor congela por completo el loop del motor (posiciones exactas de paleta/pelota/bloques no cambian) y REANUDAR continúa sin salto brusco.
-- [ ] La tecla P/Escape dentro del canvas también pausa/reanuda, y el overlay de pausa muestra el selector de nivel (1–5); clicar un nivel salta a ese nivel y reanuda el juego.
-- [ ] El botón FIN del Reproductor sigue abriendo el modal de fin manualmente en cualquier momento.
-- [ ] Guardar la puntuación en el modal inserta una fila real en `scores` con `game_id: "arkanoid"` y aparece reflejada en el Detalle de `arkanoid` y en el Salón de la Fama.
-- [ ] Salir del Reproductor detiene el loop del motor y no deja `requestAnimationFrame` corriendo en background.
-- [ ] El `<canvas>` se adapta a móvil y desktop sin distorsionar el dibujo, manteniendo la resolución lógica interna 800×600.
-- [ ] Los bloques, paleta, pelota y HUD interno usan los tokens de color definidos en el modelo de datos (paleta neón del Vault + los 2 tonos nuevos para `red`/`hotpink` + el tono neutro para `gray`), no los sprites ni el blanco/negro original.
-- [ ] `bloque-buster` y los demás juegos del catálogo (incluyendo `asteroides` y `tetris`) no cambian su comportamiento ni apariencia.
-- [ ] `npm run build` compila sin errores de TypeScript.
-- [ ] No hay errores en la consola del navegador durante el recorrido completo Biblioteca → Detalle → Reproductor → Fin (derrota y victoria) → Guardar → Detalle/Salón.
+- [x] `games` incluye una fila con `id: "arkanoid"`, categoría `ARCADE`, `available: true`, y el juego aparece en `/biblioteca` filtrable por búsqueda y por categoría.
+- [x] `/juego/arkanoid` (Detalle) muestra la info real del juego y un leaderboard (top 10) vía `getTopScoresByGame`, inicialmente vacío.
+- [x] En `/juego/arkanoid/jugar`, el `game-arena` simulado es reemplazado por un `<canvas>` que corre el motor real de `lib/games/arkanoid.ts`, registrado en `lib/games/registry.ts`.
+- [x] La paleta se mueve tanto con el mouse como con las flechas ← →.
+- [x] La pelota rebota correctamente contra paredes, paleta y bloques, y rompe un bloque por colisión (10 puntos cada uno).
+- [x] Los 5 niveles cargan con sus patrones de bloques y velocidades correspondientes, en el mismo orden que el original.
+- [x] Perder las 3 vidas dispara `onGameOver` con el score final y abre el modal de fin automáticamente.
+- [x] Completar el nivel 5 (limpiar todos los bloques) también dispara `onGameOver` con el score final y abre el mismo modal de fin, sin mensaje ni estilo distinto al de la derrota.
+- [x] El HUD superior del Reproductor (puntuación, vidas, nivel) se actualiza en tiempo real, coexistiendo con el HUD propio dibujado dentro del canvas, ambos mostrando los mismos valores.
+- [x] El botón PAUSA del Reproductor congela por completo el loop del motor (posiciones exactas de paleta/pelota/bloques no cambian) y REANUDAR continúa sin salto brusco.
+- [x] La tecla P/Escape dentro del canvas también pausa/reanuda, y el overlay de pausa muestra el selector de nivel (1–5); clicar un nivel salta a ese nivel y reanuda el juego.
+- [x] El botón FIN del Reproductor sigue abriendo el modal de fin manualmente en cualquier momento.
+- [x] Guardar la puntuación en el modal inserta una fila real en `scores` con `game_id: "arkanoid"` y aparece reflejada en el Detalle de `arkanoid` y en el Salón de la Fama.
+- [x] Salir del Reproductor detiene el loop del motor y no deja `requestAnimationFrame` corriendo en background.
+- [x] El `<canvas>` se adapta a móvil y desktop sin distorsionar el dibujo, manteniendo la resolución lógica interna 800×600.
+- [x] Los bloques, paleta, pelota y HUD interno usan los tokens de color definidos en el modelo de datos (paleta neón del Vault + los 2 tonos nuevos para `red`/`hotpink` + el tono neutro para `gray`), no los sprites ni el blanco/negro original.
+- [x] `bloque-buster` y los demás juegos del catálogo (incluyendo `asteroides` y `tetris`) no cambian su comportamiento ni apariencia.
+- [x] `npm run build` compila sin errores de TypeScript.
+- [x] No hay errores en la consola del navegador durante el recorrido completo Biblioteca → Detalle → Reproductor → Fin (derrota y victoria) → Guardar → Detalle/Salón.
 
 ## Decisiones tomadas y descartadas
 

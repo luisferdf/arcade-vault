@@ -1,6 +1,6 @@
 # SPEC 09 — Juego real: Snake
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 06-leaderboard-catalogo-supabase (tabla `games`/`scores`, `lib/games/engine.ts` + `registry.ts`)
 > **Fecha:** 2026-08-18
 > **Objetivo:** Reemplazar la entrada mock `serpentina` por "Snake" (id `snake`), un juego real y jugable donde la serpiente se mueve en continuo por una grilla de 30×30 celdas, come frutas de un spritesheet real para crecer y puntuar, y termina al chocar contra el borde o su propio cuerpo, con velocidad progresiva.

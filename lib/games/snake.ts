@@ -212,6 +212,14 @@ export class SnakeGame implements ArcadeGame {
     ctx.fillStyle = COLOR_BG;
     ctx.fillRect(0, 0, W, H);
 
+    // Borde del mapa: sin esto, el fondo del canvas (#0a0a0f) se confunde con
+    // el fondo negro del CRT y el límite jugable no se distingue.
+    ctx.strokeStyle = COLOR_BODY;
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, W - 2, H - 2);
+    ctx.globalAlpha = 1;
+
     this.drawFruit();
 
     for (let i = this.segments.length - 1; i >= 0; i--) {

@@ -90,12 +90,18 @@ The Player is generic: it knows nothing about individual games.
 
 - `references/started-games/` — original vanilla JS games used as the source when porting an engine.
 - `references/templates/` — the original design mockups the screens were built from.
+- `references/implemented-games.md` — catalog of shipped games (id, título, categoría, color).
+- `references/game-suggestion-todo.md` — running backlog of game ideas, maintained by the `game-planner` subagent.
 
 ## Skills
 
 - **`/frontend-design`** — always use it when designing or reshaping UI.
 - **`/add-game <slug>`** — project skill (`.claude/skills/add-game/SKILL.md`). Interviews the user and writes `specs/NN-juego-<slug>.md` in `Borrador` state; it **never writes code and never touches Supabase**. Implementation goes through `/spec-impl`. Answers in Spanish throughout.
 - `/spec` and `/spec-impl` own the spec format and process; `/add-game` only specializes `/spec` with game-domain knowledge — on any conflict, `/spec` wins.
+
+## Subagents
+
+- **`game-planner`** (`.claude/agents/game-planner.md`) — decides _what_ game should be added next, one step upstream of `/add-game`. Diagnoses gaps in the catalog (`references/implemented-games.md`), researches candidates (can use WebSearch/WebFetch), and proposes 1 main recommendation + 2 alternatives with fit/cost/risk reasoning. Keeps its own memory of every idea it has ever suggested/accepted/rejected in `.claude/agents/game-planner/memory/<slug>.md`, and rewrites `references/game-suggestion-todo.md` from that memory on every run so it never re-suggests something already decided. **Never writes specs or code** — the flow is `game-planner` → `/add-game <slug>` → `/spec-impl`.
 
 ## Conventions
 

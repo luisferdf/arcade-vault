@@ -54,6 +54,40 @@
     monospace;
 }
 
+/* ===== tema claro: solo redefine tokens de color, nunca layout =====
+   Eje independiente de las skins de juego: el tema repinta el chrome del sitio,
+   la skin repinta únicamente el canvas. `data-theme` lo fija el script inline de
+   app/layout.tsx antes del primer paint (ver lib/theme.ts). */
+[data-theme="light"] {
+  --bg: #f2f3f7;
+  --bg-2: #e7e9f0;
+  --bg-3: #dcdfe9;
+  --ink: #12131a;
+  --ink-dim: #4a4f66;
+  --ink-faint: #5f6580;
+  --cyan: #00707f;
+  --magenta: #c1004f;
+  --yellow: #7a6a00;
+  --green: #00704a;
+  --gold: #8a5f00;
+  --silver: #5f6672;
+  --bronze: #8a4a1e;
+  --line: rgba(0, 90, 110, 0.28);
+  --line-2: rgba(0, 0, 0, 0.1);
+}
+/* El fondo decorativo (rejilla en perspectiva + scanlines) está calibrado para
+   negro; sobre claro se atenúa para no ensuciar el texto. */
+[data-theme="light"] .av-bg::before {
+  opacity: 0.22;
+}
+[data-theme="light"] .av-bg::after {
+  mix-blend-mode: multiply;
+  opacity: 0.25;
+}
+[data-theme="light"] .av-noise {
+  opacity: 0.12;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -321,6 +355,12 @@ a {
 }
 .av-nav .hamburger {
   display: none;
+}
+.av-nav .theme-btn {
+  padding: 10px 14px;
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1;
 }
 
 @media (max-width: 840px) {
@@ -1153,6 +1193,21 @@ body.av-fullscreen-game .crt-bottom {
 .hud-actions {
   display: flex;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+/* Selector de skin: mismo chip group de la Biblioteca, en versión compacta. */
+.skin-chips .chip {
+  padding: 9px 10px;
+  font-size: 8px;
+}
+.skin-chips .chip.active {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.3);
+}
+[data-theme="light"] .skin-chips .chip.active {
+  box-shadow: none;
 }
 
 .crt {

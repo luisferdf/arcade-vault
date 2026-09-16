@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
-import { Press_Start_2P, JetBrains_Mono, Courier_Prime } from "next/font/google";
+import {
+  Press_Start_2P,
+  JetBrains_Mono,
+  Courier_Prime,
+} from "next/font/google";
 import { Nav } from "./_components/Nav";
+import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 const pixelFont = Press_Start_2P({
@@ -34,7 +39,14 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${pixelFont.variable} ${monoFont.variable} ${courierPrime.variable} h-full`}
+      data-theme="dark"
+      suppressHydrationWarning
     >
+      <head>
+        {/* Fija el tema antes del primer paint: sin esto, el modo claro parpadea
+            en oscuro hasta que hidrata React. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
         <div className="av-bg" />
         <div className="av-noise" />

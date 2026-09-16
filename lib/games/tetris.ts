@@ -6,6 +6,7 @@
 // dentro del mismo canvas principal, en una franja translúcida superpuesta al tablero.
 
 import type { ArcadeGame, GameCallbacks } from "./engine";
+import { DEFAULT_SKIN, type SkinId } from "./skins";
 
 const COLS = 10;
 const ROWS = 20;
@@ -14,26 +15,107 @@ const BLOCK = 30;
 export const W = COLS * BLOCK;
 export const H = ROWS * BLOCK;
 
-// Colores neón-ificados del Vault: el fondo/grid/UI usa los tokens del tema
-// (--cyan, fondo #0a0a0f); las 8 piezas conservan su propia paleta distintiva
-// (versión más saturada de los tonos del original) para no perder legibilidad.
-const BG = "#0a0a0f";
-const GRID_LINE = "rgba(0, 245, 255, 0.08)";
-const HUD_BG = "rgba(10, 10, 15, 0.82)";
-const HUD_BORDER = "rgba(0, 245, 255, 0.35)";
-const HUD_TEXT = "#00f5ff";
+/**
+ * Paleta de Tetris por roles semánticos. Mantiene la separación original entre
+ * el "chrome" del motor (fondo, rejilla, franja de HUD) y la paleta de piezas:
+ * `pieces` está indexada por el tipo de pieza (1..8), con `null` en el índice 0
+ * porque 0 es "celda vacía" en el tablero.
+ *
+ * Añadir una skin nueva debe ser una entrada más en `TETRIS_PALETTES`, nunca un
+ * caso especial en la lógica de dibujo.
+ */
+export interface TetrisPalette {
+  /** Fondo del tablero. */
+  bg: string;
+  /** Líneas de la rejilla (decorativo). */
+  grid: string;
+  /** Fondo translúcido de la franja de HUD superpuesta. */
+  hudBg: string;
+  /** Borde de la franja de HUD y de la caja de NEXT (decorativo). */
+  hudBorder: string;
+  /** Texto SCORE/LEVEL/LINES. */
+  hudText: string;
+  /** Bisel superior de cada bloque (antes literal inline en drawBlock). */
+  blockHighlight: string;
+  /**
+   * Opacidad de la pieza fantasma (guía de caída). Es un rol de paleta porque el
+   * contraste mínimo de la guía depende de lo clara que sea la gama de la skin.
+   */
+  ghostAlpha: number;
+  /** Índice 0 = celda vacía; 1..8 = I, O, T, S, Z, J, L, N. */
+  pieces: (string | null)[];
+}
 
-const COLORS: (string | null)[] = [
-  null,
-  "#22e5ff", // I - cian
-  "#ffe066", // O - amarillo
-  "#d66bff", // T - púrpura
-  "#39ff8f", // S - verde
-  "#ff3d6e", // Z - rojo/magenta
-  "#5ec8ff", // J - azul pálido
-  "#ffa63d", // L - naranja
-  "#aab4c4", // N - tuerca (gris metálico)
-];
+export const TETRIS_PALETTES: Record<SkinId, TetrisPalette> = {
+  // Réplica exacta de la paleta hardcodeada histórica del motor (regresión cero):
+  // chrome con los tokens del Vault (--cyan, fondo #0a0a0f) y piezas saturadas.
+  clasico: {
+    bg: "#0a0a0f",
+    grid: "rgba(0, 245, 255, 0.08)",
+    hudBg: "rgba(10, 10, 15, 0.82)",
+    hudBorder: "rgba(0, 245, 255, 0.35)",
+    hudText: "#00f5ff",
+    blockHighlight: "rgba(255,255,255,0.12)",
+    // 0.22 es el valor histórico: se conserva por regresión cero aunque deje la
+    // guía por debajo del umbral decorativo de 2:1 (ver game-with-theme.md).
+    ghostAlpha: 0.22,
+    pieces: [
+      null,
+      "#22e5ff", // I - cian
+      "#ffe066", // O - amarillo
+      "#d66bff", // T - púrpura
+      "#39ff8f", // S - verde
+      "#ff3d6e", // Z - rojo/magenta
+      "#5ec8ff", // J - azul pálido
+      "#ffa63d", // L - naranja
+      "#aab4c4", // N - tuerca (gris metálico)
+    ],
+  },
+  // Sobria: gama casi acromática con un único acento cian frío. Las 8 piezas se
+  // separan por luminosidad (y por forma), no por tono, para jugar sin fatiga.
+  // Contraste decorativo (grid/ghost) reforzado por encima del mínimo 2:1.
+  neon: {
+    bg: "#101014",
+    grid: "#5a5f70",
+    hudBg: "rgba(16, 16, 20, 0.85)",
+    hudBorder: "rgba(230, 233, 255, 0.28)",
+    hudText: "#e6e9ff",
+    blockHighlight: "rgba(255,255,255,0.14)",
+    ghostAlpha: 0.5,
+    pieces: [
+      null,
+      "#d8e4ee", // I
+      "#f0ead8", // O
+      "#b9b3c6", // T
+      "#a9c0b4", // S
+      "#c6a8a8", // Z
+      "#93a4bb", // J
+      "#cdbfa6", // L
+      "#8f949e", // N (tuerca)
+    ],
+  },
+  // Consola de 8 bits: gama corta, tonos cálidos, bisel duro, sin glow.
+  retro: {
+    bg: "#12100c",
+    grid: "#504838",
+    hudBg: "rgba(18, 16, 12, 0.88)",
+    hudBorder: "#a0783c",
+    hudText: "#f0c040",
+    blockHighlight: "rgba(255,255,255,0.22)",
+    ghostAlpha: 0.42,
+    pieces: [
+      null,
+      "#f8f0d8", // I - hueso
+      "#f0c040", // O - oro
+      "#d89ce8", // T - violeta
+      "#98d868", // S - verde oliva
+      "#f07858", // Z - ladrillo
+      "#88b0f0", // J - azul
+      "#e89848", // L - ámbar
+      "#b0a898", // N - tuerca
+    ],
+  },
+};
 
 type Shape = number[][];
 
@@ -254,6 +336,7 @@ function softDrop(state: GameState) {
 // ── Draw ──────────────────────────────────────────────────────────────────────
 function drawBlock(
   ctx: CanvasRenderingContext2D,
+  palette: TetrisPalette,
   x: number,
   y: number,
   colorIndex: number,
@@ -261,17 +344,17 @@ function drawBlock(
   alpha?: number,
 ) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
+  const color = palette.pieces[colorIndex];
   ctx.globalAlpha = alpha ?? 1;
   ctx.fillStyle = color!;
   ctx.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
-  ctx.fillStyle = "rgba(255,255,255,0.12)";
+  ctx.fillStyle = palette.blockHighlight;
   ctx.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   ctx.globalAlpha = 1;
 }
 
-function drawGrid(ctx: CanvasRenderingContext2D) {
-  ctx.strokeStyle = GRID_LINE;
+function drawGrid(ctx: CanvasRenderingContext2D, palette: TetrisPalette) {
+  ctx.strokeStyle = palette.grid;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -287,26 +370,39 @@ function drawGrid(ctx: CanvasRenderingContext2D) {
   }
 }
 
-function drawBoard(ctx: CanvasRenderingContext2D, state: GameState) {
-  ctx.fillStyle = BG;
+function drawBoard(
+  ctx: CanvasRenderingContext2D,
+  palette: TetrisPalette,
+  state: GameState,
+) {
+  ctx.fillStyle = palette.bg;
   ctx.fillRect(0, 0, W, H);
-  drawGrid(ctx);
+  drawGrid(ctx, palette);
 
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
-      drawBlock(ctx, c, r, state.board[r][c], BLOCK);
+      drawBlock(ctx, palette, c, r, state.board[r][c], BLOCK);
 
   const gy = ghostY(state.board, state.current);
   const { shape } = state.current;
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
       if (shape[r][c])
-        drawBlock(ctx, state.current.x + c, gy + r, shape[r][c], BLOCK, 0.22);
+        drawBlock(
+          ctx,
+          palette,
+          state.current.x + c,
+          gy + r,
+          shape[r][c],
+          BLOCK,
+          palette.ghostAlpha,
+        );
 
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
       drawBlock(
         ctx,
+        palette,
         state.current.x + c,
         state.current.y + r,
         shape[r][c],
@@ -318,17 +414,21 @@ function drawBoard(ctx: CanvasRenderingContext2D, state: GameState) {
 const HUD_H = 40;
 const NEXT_BOX = { x: W - 42, y: 4, w: 38, h: 32 };
 
-function drawHUD(ctx: CanvasRenderingContext2D, state: GameState) {
-  ctx.fillStyle = HUD_BG;
+function drawHUD(
+  ctx: CanvasRenderingContext2D,
+  palette: TetrisPalette,
+  state: GameState,
+) {
+  ctx.fillStyle = palette.hudBg;
   ctx.fillRect(0, 0, W, HUD_H);
-  ctx.strokeStyle = HUD_BORDER;
+  ctx.strokeStyle = palette.hudBorder;
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(0, HUD_H);
   ctx.lineTo(W, HUD_H);
   ctx.stroke();
 
-  ctx.fillStyle = HUD_TEXT;
+  ctx.fillStyle = palette.hudText;
   ctx.font = "11px monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -336,7 +436,7 @@ function drawHUD(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.fillText(`LEVEL ${state.level}   LINES ${state.lines}`, 8, 32);
 
   // Caja de NEXT
-  ctx.strokeStyle = HUD_BORDER;
+  ctx.strokeStyle = palette.hudBorder;
   ctx.strokeRect(NEXT_BOX.x, NEXT_BOX.y, NEXT_BOX.w, NEXT_BOX.h);
   const nb = 7; // tamaño de bloque dentro de la preview
   const shape = state.next.shape;
@@ -346,7 +446,8 @@ function drawHUD(ctx: CanvasRenderingContext2D, state: GameState) {
   ctx.translate(NEXT_BOX.x + 2, NEXT_BOX.y + 2);
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
-      if (shape[r][c]) drawBlock(ctx, offX + c, offY + r, shape[r][c], nb);
+      if (shape[r][c])
+        drawBlock(ctx, palette, offX + c, offY + r, shape[r][c], nb);
   ctx.restore();
 }
 
@@ -357,6 +458,7 @@ export class TetrisGame implements ArcadeGame {
   private ctx: CanvasRenderingContext2D;
   private callbacks: TetrisCallbacks;
   private state: GameState;
+  private palette: TetrisPalette;
   private rafId: number | null = null;
   private lastTime: number | null = null;
   private gameOverFired = false;
@@ -402,8 +504,8 @@ export class TetrisGame implements ArcadeGame {
   };
 
   private draw() {
-    drawBoard(this.ctx, this.state);
-    drawHUD(this.ctx, this.state);
+    drawBoard(this.ctx, this.palette, this.state);
+    drawHUD(this.ctx, this.palette, this.state);
   }
 
   private emitChanges() {
@@ -452,9 +554,14 @@ export class TetrisGame implements ArcadeGame {
     this.rafId = requestAnimationFrame(this.loop);
   };
 
-  constructor(ctx: CanvasRenderingContext2D, callbacks: TetrisCallbacks) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    callbacks: TetrisCallbacks,
+    skin: SkinId = DEFAULT_SKIN,
+  ) {
     this.ctx = ctx;
     this.callbacks = callbacks;
+    this.palette = TETRIS_PALETTES[skin] ?? TETRIS_PALETTES[DEFAULT_SKIN];
     this.state = createGameState();
     this.prevScore = this.state.score;
     this.prevLevel = this.state.level;
@@ -482,6 +589,16 @@ export class TetrisGame implements ArcadeGame {
     if (this.rafId !== null || this.gameOverFired) return;
     this.lastTime = null;
     this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  /**
+   * Cambia la paleta en caliente: no toca el estado del juego, ni el loop, ni los
+   * listeners (siguen siendo los registrados en `start()`). Repinta al momento para
+   * que el cambio también se vea con la partida en pausa o terminada.
+   */
+  setSkin(skin: SkinId): void {
+    this.palette = TETRIS_PALETTES[skin] ?? TETRIS_PALETTES[DEFAULT_SKIN];
+    this.draw();
   }
 
   destroy(): void {

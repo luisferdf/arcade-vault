@@ -1,12 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+} from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "@/lib/games";
 import { getStoredUser } from "@/lib/auth";
 import { saveScore } from "@/lib/scores";
 import type { ArcadeGame } from "@/lib/games/engine";
 import { getEngine } from "@/lib/games/registry";
+import {
+  SKIN_LABELS,
+  getSkinServerSnapshot,
+  getSkinSnapshot,
+  setStoredSkin,
+  subscribeSkin,
+  type SkinId,
+} from "@/lib/games/skins";
 
 export function GamePlayerClient({ game }: { game: Game | null }) {
   const router = useRouter();
@@ -23,6 +37,15 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
   const [saved, setSaved] = useState(false);
   // Cambia en cada partida nueva: fuerza a recrear la instancia del motor.
   const [runId, setRunId] = useState(0);
+  // Skin del canvas. Solo la declara el motor en registry.ts (`skins`); si no la
+  // declara, no hay selector. Nunca se ramifica por id de juego aquí.
+  const skinOptions: SkinId[] = engine?.skins ?? [];
+  // Preferencia persistida en localStorage: store externo, igual que el tema.
+  const skin = useSyncExternalStore(
+    subscribeSkin,
+    getSkinSnapshot,
+    getSkinServerSnapshot,
+  );
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ArcadeGame | null>(null);
@@ -65,14 +88,18 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     canvas.height = engine.height * dpr;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const instance = engine.create(ctx, {
-      onScoreChange: setScore,
-      onLivesChange: setLives,
-      onLevelChange: setLevel,
-      onGameOver: () => setOver(true),
-      onStatChange: (key, value) =>
-        setStats((prev) => ({ ...prev, [key]: value })),
-    });
+    const instance = engine.create(
+      ctx,
+      {
+        onScoreChange: setScore,
+        onLivesChange: setLives,
+        onLevelChange: setLevel,
+        onGameOver: () => setOver(true),
+        onStatChange: (key, value) =>
+          setStats((prev) => ({ ...prev, [key]: value })),
+      },
+      getSkinSnapshot(),
+    );
     engineRef.current = instance;
     instance.start();
 
@@ -87,6 +114,15 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     if (!engine || !over) return;
     engineRef.current?.pause();
   }, [over, engine]);
+
+  // Aplica la skin sin reiniciar la partida. Si el motor no expone setSkin(),
+  // se remonta la instancia (fallback) incrementando runId.
+  useEffect(() => {
+    const instance = engineRef.current;
+    if (!instance) return;
+    if (instance.setSkin) instance.setSkin(skin);
+    else setRunId((r) => r + 1);
+  }, [skin]);
 
   if (!game) {
     return (
@@ -110,6 +146,9 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
   }
 
   const endGame = () => setOver(true);
+  // El store externo (localStorage + evento) es la única fuente: escribir dispara
+  // el re-render y el efecto que aplica la skin al motor vivo.
+  const changeSkin = (id: SkinId) => setStoredSkin(id);
   const togglePause = () => {
     setPaused((p) => {
       const next = !p;
@@ -168,6 +207,20 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
           ))}
         </div>
         <div className="hud-actions">
+          {skinOptions.length > 1 && (
+            <div className="av-chips skin-chips" role="group" aria-label="Skin">
+              {skinOptions.map((id) => (
+                <button
+                  key={id}
+                  className={"chip" + (skin === id ? " active" : "")}
+                  aria-pressed={skin === id}
+                  onClick={() => changeSkin(id)}
+                >
+                  {SKIN_LABELS[id]}
+                </button>
+              ))}
+            </div>
+          )}
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>

@@ -7,6 +7,8 @@
  * callbacks — el motor es la fuente de verdad, el HUD del Reproductor es una vista.
  */
 
+import type { SkinId } from "./skins";
+
 export interface GameCallbacks {
   onScoreChange: (score: number) => void;
   onLivesChange: (lives: number) => void;
@@ -25,6 +27,12 @@ export interface ArcadeGame {
   resume(): void;
   /** Cancela el loop y remueve los listeners. Obligatorio en el cleanup del efecto. */
   destroy(): void;
+  /**
+   * Repinta el juego con otra skin **sin reiniciar la partida en curso** ni tocar
+   * los listeners. Opcional: si un motor no lo implementa, el Reproductor remonta
+   * la instancia (fallback, no primera opción).
+   */
+  setSkin?(skin: SkinId): void;
 }
 
 /** Stat extra que el Reproductor pinta en su HUD, alimentada por `onStatChange`. */
@@ -37,7 +45,13 @@ export interface GameEngineEntry {
   /** Resolución lógica interna; el canvas se escala por CSS. */
   width: number;
   height: number;
-  create(ctx: CanvasRenderingContext2D, callbacks: GameCallbacks): ArcadeGame;
+  create(
+    ctx: CanvasRenderingContext2D,
+    callbacks: GameCallbacks,
+    skin?: SkinId,
+  ): ArcadeGame;
+  /** Skins que el motor sabe pintar. Si se omite, se asumen las tres de `SKIN_IDS`. */
+  skins?: SkinId[];
   /** Stats extra a mostrar en el HUD del Reproductor. */
   extraStats?: ExtraStat[];
   /** `false` oculta el bloque de vidas del HUD (juegos sin vidas, ej. Tetris). */

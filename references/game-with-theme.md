@@ -4,12 +4,12 @@ Registro de qué motores de `lib/games/` ya pasaron por el subagente `skin-desig
 mantiene **exclusivamente** ese agente, al cerrar cada ejecución. ✅ solo cuando pasó la
 validación de contraste (dark y light); ❌ solo por un bloqueo duro documentado en notas.
 
-| juego        | clasico | retro | neon | skin extra | darkmode revisado | última actualización | notas                                                                                                             |
-| ------------ | ------- | ----- | ---- | ---------- | ----------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `asteroides` | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta; `setSkin()` en caliente; nave/power-up separados por forma, no por luminosidad |
-| `tetris`     | ❌      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `clasico` = réplica histórica exacta; rejilla (1.14:1) y fantasma (<2:1) bajo umbral decorativo, regresión cero   |
-| `arkanoid`   | ❌      | ❌    | ❌   | —          | ❌                | —                    |                                                                                                                   |
-| `snake`      | ❌      | ❌    | ❌   | —          | ❌                | —                    |                                                                                                                   |
+| juego        | clasico | retro | neon | skin extra | darkmode revisado | última actualización | notas                                                                                                                                                                          |
+| ------------ | ------- | ----- | ---- | ---------- | ----------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `asteroides` | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta; `setSkin()` en caliente; nave/power-up separados por forma, no por luminosidad                                                              |
+| `tetris`     | ❌      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `clasico` = réplica histórica exacta; rejilla (1.14:1) y fantasma (<2:1) bajo umbral decorativo, regresión cero                                                                |
+| `arkanoid`   | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta (bola cian = bloques cian, separadas solo por forma); bloques por nombre `BlockColor`, `arkanoid-levels.ts` intacto; `setSkin()` en caliente |
+| `snake`      | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta (cabeza/cuerpo solo separados por tono, 1.01:1); fruta = sprite PNG, la skin solo controla su fallback; `setSkin()` en caliente              |
 
 ## Infraestructura compartida
 

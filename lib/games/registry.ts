@@ -32,13 +32,15 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     width: ARKANOID_W,
     height: ARKANOID_H,
     usesLives: true,
-    create: (ctx, callbacks) => new ArkanoidGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new ArkanoidGame(ctx, callbacks, skin),
   },
   snake: {
     width: SNAKE_W,
     height: SNAKE_H,
     usesLives: false,
-    create: (ctx, callbacks) => new SnakeGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new SnakeGame(ctx, callbacks, skin),
   },
 };
 

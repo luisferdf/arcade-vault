@@ -4,6 +4,7 @@
 // velocidad progresiva.
 
 import type { ArcadeGame, GameCallbacks } from "./engine";
+import { DEFAULT_SKIN, type SkinId } from "./skins";
 import { FRUIT_ATLAS, FRUIT_NAMES, FRUIT_SPRITE_SRC } from "./snake-atlas";
 
 export const W = 600;
@@ -38,10 +39,74 @@ const KEY_TO_DIR: Record<string, Direction> = {
   ArrowRight: "right",
 };
 
-const COLOR_HEAD = "#00f5ff"; // --cyan
-const COLOR_BODY = "#00ff88"; // --green
-const COLOR_FRUIT_FALLBACK = "#ff006e"; // --magenta
-const COLOR_BG = "#0a0a0f";
+/**
+ * Paleta de Snake por roles semánticos.
+ *
+ * La fruta **no** es recoloreable: se pinta desde el spritesheet PNG
+ * (`public/games/snake/fruits.png`, ver `snake-atlas.ts`). `fruitFallback` es el
+ * color del cuadro sólido que se dibuja solo mientras la imagen no ha cargado (o
+ * si falla), y es lo único que la skin controla de la fruta.
+ *
+ * Añadir una skin nueva debe ser una entrada más en `SNAKE_PALETTES`, nunca un
+ * caso especial en la lógica de dibujo.
+ */
+export interface SnakePalette {
+  /** Fondo del tablero. */
+  bg: string;
+  /** Cabeza de la serpiente (elemento jugable principal). */
+  head: string;
+  /** Segmentos del cuerpo (elemento jugable). */
+  body: string;
+  /** Cuadro sólido de la fruta mientras el sprite no ha cargado. */
+  fruitFallback: string;
+  /** Borde del límite jugable (decorativo). */
+  border: string;
+  /** Opacidad del borde: el mínimo decorativo depende de la gama de la skin. */
+  borderAlpha: number;
+  /** Velo del game over sobre el tablero. */
+  overlay: string;
+  /** Texto "GAME OVER" sobre el velo. */
+  overlayText: string;
+}
+
+export const SNAKE_PALETTES: Record<SkinId, SnakePalette> = {
+  // Sobria: gama fría casi acromática con un único acento ámbar para la fruta.
+  // Cabeza y cuerpo se separan por luminosidad (17.6:1 vs 5.3:1), no solo por tono.
+  clasico: {
+    bg: "#101014",
+    head: "#f2f5f8",
+    body: "#7c8799",
+    fruitFallback: "#ffc857",
+    border: "#8d97a8",
+    borderAlpha: 0.45,
+    overlay: "rgba(8, 8, 12, 0.66)",
+    overlayText: "#f2f5f8",
+  },
+  // Réplica exacta de la paleta hardcodeada histórica del motor (regresión cero):
+  // --cyan / --green / --magenta sobre el fondo #0a0a0f del Vault, borde = cuerpo
+  // al 50 % de alpha, velo rgba(0,0,0,0.6) y texto #fff.
+  neon: {
+    bg: "#0a0a0f",
+    head: "#00f5ff",
+    body: "#00ff88",
+    fruitFallback: "#ff006e",
+    border: "#00ff88",
+    borderAlpha: 0.5,
+    overlay: "rgba(0, 0, 0, 0.6)",
+    overlayText: "#ffffff",
+  },
+  // Consola de 8 bits: gama corta, tonos cálidos, sin glow ni sombras suaves.
+  retro: {
+    bg: "#14100a",
+    head: "#f8f0d0",
+    body: "#7a9c30",
+    fruitFallback: "#f8dc78",
+    border: "#a0783c",
+    borderAlpha: 0.55,
+    overlay: "rgba(12, 8, 4, 0.66)",
+    overlayText: "#f8f0d0",
+  },
+};
 
 const INITIAL_INTERVAL_MS = 140;
 const MIN_INTERVAL_MS = 60;
@@ -56,6 +121,7 @@ type InternalState = "playing" | "gameover";
 export class SnakeGame implements ArcadeGame {
   private ctx: CanvasRenderingContext2D;
   private callbacks: GameCallbacks;
+  private palette: SnakePalette;
 
   private segments: Point[] = [];
   private direction: Direction = "right";
@@ -89,9 +155,14 @@ export class SnakeGame implements ArcadeGame {
     this.pendingDirection = dir;
   };
 
-  constructor(ctx: CanvasRenderingContext2D, callbacks: GameCallbacks) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    callbacks: GameCallbacks,
+    skin: SkinId = DEFAULT_SKIN,
+  ) {
     this.ctx = ctx;
     this.callbacks = callbacks;
+    this.palette = SNAKE_PALETTES[skin] ?? SNAKE_PALETTES[DEFAULT_SKIN];
 
     this.fruitImage = new Image();
     this.fruitImage.onload = () => {
@@ -202,20 +273,20 @@ export class SnakeGame implements ArcadeGame {
         CELL,
       );
     } else {
-      ctx.fillStyle = COLOR_FRUIT_FALLBACK;
+      ctx.fillStyle = this.palette.fruitFallback;
       ctx.fillRect(this.fruit.x, this.fruit.y, CELL, CELL);
     }
   }
 
   private draw() {
-    const { ctx } = this;
-    ctx.fillStyle = COLOR_BG;
+    const { ctx, palette } = this;
+    ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, W, H);
 
-    // Borde del mapa: sin esto, el fondo del canvas (#0a0a0f) se confunde con
-    // el fondo negro del CRT y el límite jugable no se distingue.
-    ctx.strokeStyle = COLOR_BODY;
-    ctx.globalAlpha = 0.5;
+    // Borde del mapa: sin esto, el fondo del canvas se confunde con el fondo
+    // negro del CRT y el límite jugable no se distingue.
+    ctx.strokeStyle = palette.border;
+    ctx.globalAlpha = palette.borderAlpha;
     ctx.lineWidth = 2;
     ctx.strokeRect(1, 1, W - 2, H - 2);
     ctx.globalAlpha = 1;
@@ -224,14 +295,14 @@ export class SnakeGame implements ArcadeGame {
 
     for (let i = this.segments.length - 1; i >= 0; i--) {
       const s = this.segments[i];
-      ctx.fillStyle = i === 0 ? COLOR_HEAD : COLOR_BODY;
+      ctx.fillStyle = i === 0 ? palette.head : palette.body;
       ctx.fillRect(s.x, s.y, CELL, CELL);
     }
 
     if (this.state === "gameover") {
-      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.fillStyle = palette.overlay;
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = palette.overlayText;
       ctx.font = "bold 48px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -288,6 +359,16 @@ export class SnakeGame implements ArcadeGame {
     if (this.rafId !== null || this.gameOverFired) return;
     this.lastTime = null;
     this.rafId = requestAnimationFrame(this.loop);
+  }
+
+  /**
+   * Cambia la paleta en caliente: no toca segmentos, dirección, velocidad ni
+   * listeners, así que la partida en curso sigue igual. Si el loop no está vivo
+   * (pausa o game over), repinta una vez para que el cambio se vea al instante.
+   */
+  setSkin(skin: SkinId): void {
+    this.palette = SNAKE_PALETTES[skin] ?? SNAKE_PALETTES[DEFAULT_SKIN];
+    if (this.rafId === null) this.draw();
   }
 
   destroy(): void {

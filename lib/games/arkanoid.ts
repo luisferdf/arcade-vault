@@ -5,25 +5,130 @@
 // fuera de lo que el motor recibe.
 
 import type { ArcadeGame, GameCallbacks } from "./engine";
+import { DEFAULT_SKIN, type SkinId } from "./skins";
 import { LEVELS, type BlockColor } from "./arkanoid-levels";
 
 export const W = 800;
 export const H = 600;
 
-// Colores neón del Vault (mismos valores que app/globals.css) + 3 tonos nuevos
-// para cubrir red/hotpink/gray del original, que no tienen token oficial.
-const BLOCK_COLORS: Record<BlockColor, string> = {
-  cyan: "#00f5ff",
-  magenta: "#ff006e",
-  yellow: "#f5ff00",
-  green: "#00ff88",
-  red: "#ff3b3b",
-  hotpink: "#ff4fd8",
-  gray: "#8a8aa0",
+/**
+ * Paleta de Arkanoid por roles semánticos. Añadir una skin nueva debe ser una
+ * entrada más en `ARKANOID_PALETTES`, nunca un caso especial en el dibujo.
+ *
+ * Ojo con `blocks`: los niveles (`arkanoid-levels.ts`) guardan el **nombre**
+ * del color (`BlockColor`), no un hex, así que cada skin reinterpreta esos 7
+ * nombres. El nombre es una etiqueta semántica heredada del original, no una
+ * promesa de tono: en `retro` "hotpink" no tiene por qué ser rosa.
+ */
+export interface ArkanoidPalette {
+  /** Fondo del campo de juego. */
+  bg: string;
+  /** Pala del jugador (elemento jugable). */
+  paddle: string;
+  /** Bola (elemento jugable). */
+  ball: string;
+  /** Texto del HUD (score/nivel) e iconos de vidas. */
+  hud: string;
+  /** Los 7 nombres de color que usan los niveles (elementos jugables). */
+  blocks: Record<BlockColor, string>;
+  /** Velo del overlay de GAME OVER / victoria. */
+  overlayBg: string;
+  /** Velo del overlay de pausa. */
+  pauseBg: string;
+  /** Texto de los overlays (sobre `overlayBg` / `pauseBg`). */
+  overlayText: string;
+  /** Relleno del botón del nivel actual en el selector de pausa. */
+  levelBtnActiveBg: string;
+  /** Relleno de los botones de nivel inactivos. */
+  levelBtnBg: string;
+  /** Borde de los botones de nivel (decorativo). */
+  levelBtnBorder: string;
+  /** Número sobre el botón activo. */
+  levelBtnActiveText: string;
+  /** Número sobre un botón inactivo. */
+  levelBtnText: string;
+}
+
+export const ARKANOID_PALETTES: Record<SkinId, ArkanoidPalette> = {
+  // Sobria: gama casi acromática de baja saturación con la pala y la bola en
+  // blanco frío (el punto más luminoso de la escala) y los 7 tonos de bloque
+  // escalonados por luminosidad además de por matiz, para jugar sin fatiga y
+  // sin depender del canal de color (daltonismo).
+  clasico: {
+    bg: "#0d0f12",
+    paddle: "#f4f7fa",
+    ball: "#f4f7fa",
+    hud: "#d6dde4",
+    blocks: {
+      gray: "#7e848e",
+      magenta: "#9d90b0",
+      cyan: "#8fb3c6",
+      red: "#c3968e",
+      green: "#a9c4af",
+      hotpink: "#d4b8cc",
+      yellow: "#cdbf90",
+    },
+    overlayBg: "rgba(8, 10, 14, 0.68)",
+    pauseBg: "rgba(8, 10, 14, 0.72)",
+    overlayText: "#f4f7fa",
+    levelBtnActiveBg: "#ffcc55",
+    levelBtnBg: "#464d57",
+    levelBtnBorder: "#f4f7fa",
+    levelBtnActiveText: "#0d0f12",
+    levelBtnText: "#e6ebf0",
+  },
+  // Réplica exacta de la paleta hardcodeada histórica del motor (regresión
+  // cero): tokens neón del Vault (--cyan/--magenta/--yellow/--green) más los 3
+  // tonos extra (red/hotpink/gray) sobre el fondo #0a0a0f del sitio.
+  neon: {
+    bg: "#0a0a0f",
+    paddle: "#00f5ff",
+    ball: "#00f5ff",
+    hud: "#00f5ff",
+    blocks: {
+      cyan: "#00f5ff",
+      magenta: "#ff006e",
+      yellow: "#f5ff00",
+      green: "#00ff88",
+      red: "#ff3b3b",
+      hotpink: "#ff4fd8",
+      gray: "#8a8aa0",
+    },
+    overlayBg: "rgba(0, 0, 0, 0.6)",
+    pauseBg: "rgba(0, 0, 0, 0.65)",
+    overlayText: "#fff",
+    levelBtnActiveBg: "#f0c040",
+    levelBtnBg: "#444",
+    levelBtnBorder: "#fff",
+    levelBtnActiveText: "#000",
+    levelBtnText: "#fff",
+  },
+  // Consola de 8 bits: gama corta y cálida, sin glow ni sombras suaves. Pala y
+  // bola en hueso, HUD en oro; los bloques recorren la rampa cálida clásica.
+  retro: {
+    bg: "#14100c",
+    paddle: "#f8f0d8",
+    ball: "#f8f0d8",
+    hud: "#f0c040",
+    blocks: {
+      gray: "#a09888",
+      magenta: "#d06890",
+      cyan: "#78bccc",
+      red: "#e07048",
+      green: "#90c860",
+      hotpink: "#e8a0b8",
+      yellow: "#e0c038",
+    },
+    overlayBg: "rgba(20, 16, 12, 0.7)",
+    pauseBg: "rgba(20, 16, 12, 0.74)",
+    overlayText: "#f8f0d8",
+    levelBtnActiveBg: "#f0c040",
+    levelBtnBg: "#564b38",
+    levelBtnBorder: "#f8f0d8",
+    levelBtnActiveText: "#14100c",
+    levelBtnText: "#f8f0d8",
+  },
 };
-const COLOR_PADDLE_BALL = "#00f5ff";
-const COLOR_HUD = "#00f5ff";
-const COLOR_BG = "#0a0a0f";
 
 const PADDLE_SPEED = 400;
 const BLOCK_COLS = 10;
@@ -81,6 +186,7 @@ function collideAABB(ball: Ball, block: Rect): boolean {
 export class ArkanoidGame implements ArcadeGame {
   private ctx: CanvasRenderingContext2D;
   private callbacks: GameCallbacks;
+  private palette: ArkanoidPalette;
 
   private paddle: Rect = { x: 0, y: 560, w: 81, h: 14 };
   private ball: Ball = { x: 0, y: 0, w: 16, h: 16, vx: 200, vy: -300 };
@@ -159,9 +265,14 @@ export class ArkanoidGame implements ArcadeGame {
     );
   };
 
-  constructor(ctx: CanvasRenderingContext2D, callbacks: GameCallbacks) {
+  constructor(
+    ctx: CanvasRenderingContext2D,
+    callbacks: GameCallbacks,
+    skin: SkinId = DEFAULT_SKIN,
+  ) {
     this.ctx = ctx;
     this.callbacks = callbacks;
+    this.palette = ARKANOID_PALETTES[skin] ?? ARKANOID_PALETTES[DEFAULT_SKIN];
     this.initPaddle();
     this.loadLevel(1);
   }
@@ -270,10 +381,10 @@ export class ArkanoidGame implements ArcadeGame {
   }
 
   private drawOverlay(message: string) {
-    const { ctx } = this;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+    const { ctx, palette } = this;
+    ctx.fillStyle = palette.overlayBg;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = palette.overlayText;
     ctx.font = "bold 64px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -281,11 +392,11 @@ export class ArkanoidGame implements ArcadeGame {
   }
 
   private drawPauseOverlay() {
-    const { ctx } = this;
-    ctx.fillStyle = "rgba(0, 0, 0, 0.65)";
+    const { ctx, palette } = this;
+    ctx.fillStyle = palette.pauseBg;
     ctx.fillRect(0, 0, W, H);
 
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = palette.overlayText;
     ctx.font = "bold 56px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -297,14 +408,16 @@ export class ArkanoidGame implements ArcadeGame {
     for (let i = 0; i < 5; i++) {
       const bx = PAUSE_BTN_ROW_X + i * (PAUSE_BTN_W + PAUSE_BTN_GAP);
       const isActive = i + 1 === this.currentLevel;
-      ctx.fillStyle = isActive ? "#f0c040" : "#444";
-      ctx.strokeStyle = "#fff";
+      ctx.fillStyle = isActive ? palette.levelBtnActiveBg : palette.levelBtnBg;
+      ctx.strokeStyle = palette.levelBtnBorder;
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.roundRect(bx, PAUSE_BTN_Y, PAUSE_BTN_W, PAUSE_BTN_H, 6);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = isActive ? "#000" : "#fff";
+      ctx.fillStyle = isActive
+        ? palette.levelBtnActiveText
+        : palette.levelBtnText;
       ctx.font = "bold 20px monospace";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
@@ -317,13 +430,13 @@ export class ArkanoidGame implements ArcadeGame {
   }
 
   private draw() {
-    const { ctx } = this;
-    ctx.fillStyle = COLOR_BG;
+    const { ctx, palette } = this;
+    ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, W, H);
 
     for (const block of this.blocks) {
       if (!block.alive) continue;
-      ctx.fillStyle = BLOCK_COLORS[block.color];
+      ctx.fillStyle = palette.blocks[block.color];
       ctx.fillRect(block.x, block.y, block.w, block.h);
     }
 
@@ -333,7 +446,7 @@ export class ArkanoidGame implements ArcadeGame {
       const t = exp.elapsed / EXPLOSION_DURATION;
       const alpha = Math.max(0, 1 - t);
       const grow = t * 10;
-      ctx.fillStyle = BLOCK_COLORS[exp.color];
+      ctx.fillStyle = palette.blocks[exp.color];
       ctx.globalAlpha = alpha;
       ctx.fillRect(
         exp.x - grow / 2,
@@ -344,8 +457,9 @@ export class ArkanoidGame implements ArcadeGame {
       ctx.globalAlpha = 1;
     }
 
-    ctx.fillStyle = COLOR_PADDLE_BALL;
+    ctx.fillStyle = palette.paddle;
     ctx.fillRect(this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
+    ctx.fillStyle = palette.ball;
     ctx.beginPath();
     ctx.arc(
       this.ball.x + this.ball.w / 2,
@@ -357,7 +471,7 @@ export class ArkanoidGame implements ArcadeGame {
     ctx.fill();
 
     if (this.state === "playing") {
-      ctx.fillStyle = COLOR_HUD;
+      ctx.fillStyle = palette.hud;
       ctx.font = "bold 18px monospace";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
@@ -419,6 +533,16 @@ export class ArkanoidGame implements ArcadeGame {
 
     this.rafId = requestAnimationFrame(this.loop);
   };
+
+  /**
+   * Repinta con otra skin sin tocar el estado de la partida ni los listeners:
+   * el siguiente frame del loop ya usa la paleta nueva. Si el loop está parado
+   * (pausa externa o fin de partida), redibuja una vez para reflejar el cambio.
+   */
+  setSkin(skin: SkinId): void {
+    this.palette = ARKANOID_PALETTES[skin] ?? ARKANOID_PALETTES[DEFAULT_SKIN];
+    if (this.rafId === null) this.draw();
+  }
 
   start(): void {
     window.addEventListener("keydown", this.handleKeyDown);

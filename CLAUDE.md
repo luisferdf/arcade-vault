@@ -84,18 +84,29 @@ The Player is generic: it knows nothing about individual games.
 
 ### Styling
 
-`app/globals.css` (~3k lines) holds the whole design system: theme tokens in `@theme` / `:root`, the CRT/neon chrome (`.av-bg`, `.crt-screen`, `.flicker`, `.pixel`), and **game covers as pure CSS classes** (`cover-bricks`, `cover-tetro`, `cover-snake`, …) — the project uses no cover images. Neon palette: `--cyan #00f5ff`, `--magenta #ff006e`, `--yellow #f5ff00`, `--green #00ff88`, background `#0a0a0f`. Engines hardcode these same values.
+`app/globals.css` (~3k lines) holds the whole design system: theme tokens in `@theme` / `:root`, the CRT/neon chrome (`.av-bg`, `.crt-screen`, `.flicker`, `.pixel`), and **game covers as pure CSS classes** (`cover-bricks`, `cover-tetro`, `cover-snake`, …) — the project uses no cover images. Neon palette: `--cyan #00f5ff`, `--magenta #ff006e`, `--yellow #f5ff00`, `--green #00ff88`, background `#0a0a0f`. Engines hardcode these same values (being phased out per-engine into skin palettes by `skin-designer`).
+
+Two independent axes, don't conflate them: the **site theme** (dark/light, `[data-theme]` on `<html>`) recolors the chrome only; a **game skin** (`clasico`/`neon`/`retro`, per `lib/games/skins.ts`) recolors only that game's canvas.
 
 ### Reference material
 
 - `references/started-games/` — original vanilla JS games used as the source when porting an engine.
 - `references/templates/` — the original design mockups the screens were built from.
+- `references/implemented-games.md` — catalog of shipped games (id, título, categoría, color).
+- `references/game-suggestion-todo.md` — running backlog of game ideas, maintained by the `game-planner` subagent.
+- `references/game-with-theme.md` — per-game skin status (`clasico`/`neon`/`retro`, contrast pass, notes), maintained by the `skin-designer` subagent.
 
 ## Skills
 
 - **`/frontend-design`** — always use it when designing or reshaping UI.
 - **`/add-game <slug>`** — project skill (`.claude/skills/add-game/SKILL.md`). Interviews the user and writes `specs/NN-juego-<slug>.md` in `Borrador` state; it **never writes code and never touches Supabase**. Implementation goes through `/spec-impl`. Answers in Spanish throughout.
 - `/spec` and `/spec-impl` own the spec format and process; `/add-game` only specializes `/spec` with game-domain knowledge — on any conflict, `/spec` wins.
+
+## Subagents
+
+- **`game-planner`** (`.claude/agents/game-planner.md`) — decides _what_ game should be added next, one step upstream of `/add-game`. Diagnoses gaps in the catalog (`references/implemented-games.md`), researches candidates (can use WebSearch/WebFetch), and proposes 1 main recommendation + 2 alternatives with fit/cost/risk reasoning. Keeps its own memory of every idea it has ever suggested/accepted/rejected in `.claude/agents/game-planner/memory/<slug>.md`, and rewrites `references/game-suggestion-todo.md` from that memory on every run so it never re-suggests something already decided. **Never writes specs or code** — the flow is `game-planner` → `/add-game <slug>` → `/spec-impl`.
+- **`game-jam`** (`.claude/agents/game-jam.md`) — given an example of the game to build (a local code folder, a URL, or rules pasted in the prompt), ports it into 2-3 complete, alternative specs (same depth as specs 07-09) straight to `specs/Game-jam/<game-id>/`, all `Borrador`, with no interview. It never picks or invents the game — the example fixes it; gaps the example leaves open are filled with the minimal rule derived from that same example, always logged as an assumption. Reads `game-planner`'s memory to avoid repeats but never writes to it. Unlike `game-planner` (picks _what_ game is next for the backlog) or `/add-game` (interviews for _one_ spec), `game-jam` turns _one example_ into several ready-to-compare, equally faithful variants. Flow: `game-jam <example>` → pick a variant → move/rename it to `specs/NN-juego-<slug>.md` → `Aprobado` → `/spec-impl`.
+- **`skin-designer`** (`.claude/agents/skin-designer.md`) — implements the skin system **one game at a time**, only the game the user explicitly names (never the whole catalog in one pass). For that game it guarantees at least `clasico` (default), `neon` (must exactly replicate today's hardcoded palette — zero regression) and `retro` skins, each checked for WCAG contrast in both the site's dark and light theme. On its first run (bootstrap mode) it also builds the shared infrastructure: `lib/games/skins.ts`, the skin contract in `engine.ts`, the selector in `GamePlayerClient.tsx`, and the site's light theme. It tracks which game has which skins in `references/game-with-theme.md`, updating it only when it closes out a run. Invoked with no game named, it asks and writes nothing. **Unlike every other subagent in this project, it writes code.** Never touches Supabase or the schema, never modifies an engine other than the one it was given.
 
 ## Conventions
 

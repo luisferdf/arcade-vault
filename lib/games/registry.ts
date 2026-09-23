@@ -1,4 +1,5 @@
 import type { GameEngineEntry } from "./engine";
+import { SKIN_IDS } from "./skins";
 import { AsteroidsGame, W as ASTEROIDS_W, H as ASTEROIDS_H } from "./asteroids";
 import { TetrisGame, W as TETRIS_W, H as TETRIS_H } from "./tetris";
 import { ArkanoidGame, W as ARKANOID_W, H as ARKANOID_H } from "./arkanoid";
@@ -16,26 +17,30 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     width: ASTEROIDS_W,
     height: ASTEROIDS_H,
     usesLives: true,
-    create: (ctx, callbacks) => new AsteroidsGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new AsteroidsGame(ctx, callbacks, skin),
   },
   tetris: {
     width: TETRIS_W,
     height: TETRIS_H,
     usesLives: false,
     extraStats: [{ key: "lines", label: "LÍNEAS" }],
-    create: (ctx, callbacks) => new TetrisGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new TetrisGame(ctx, callbacks, skin),
   },
   arkanoid: {
     width: ARKANOID_W,
     height: ARKANOID_H,
     usesLives: true,
-    create: (ctx, callbacks) => new ArkanoidGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new ArkanoidGame(ctx, callbacks, skin),
   },
   snake: {
     width: SNAKE_W,
     height: SNAKE_H,
     usesLives: false,
-    create: (ctx, callbacks) => new SnakeGame(ctx, callbacks),
+    skins: SKIN_IDS,
+    create: (ctx, callbacks, skin) => new SnakeGame(ctx, callbacks, skin),
   },
 };
 

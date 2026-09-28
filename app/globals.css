@@ -1153,6 +1153,37 @@ body.av-fullscreen-game .crt-screen {
 body.av-fullscreen-game .crt-bottom {
   min-width: 0;
 }
+
+/* En móvil el layout de 100dvh sin scroll deja al HUD (con wrap de stats +
+   chips de skin + botones) comerse casi toda la altura disponible, colapsando
+   la fila `1fr` de `.crt` a ~0 y dejando la pantalla del juego en negro.
+   Se libera el scroll de página y se deriva el alto de `.crt-screen` a partir
+   del ancho, para que nunca dependa de una altura de padre que puede ser 0. */
+@media (max-width: 720px) {
+  body.av-fullscreen-game {
+    overflow: auto;
+    height: auto;
+  }
+  body.av-fullscreen-game #root {
+    height: auto;
+  }
+  body.av-fullscreen-game .av-main {
+    overflow: visible;
+  }
+  body.av-fullscreen-game .av-player {
+    padding: 0 12px;
+  }
+  body.av-fullscreen-game .crt {
+    display: block;
+    padding: 10px;
+  }
+  body.av-fullscreen-game .crt-screen {
+    width: 100%;
+    height: auto;
+    max-width: 100%;
+  }
+}
+
 .player-hud {
   display: flex;
   gap: 16px;

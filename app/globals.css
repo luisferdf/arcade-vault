@@ -1182,6 +1182,66 @@ body.av-fullscreen-game .crt-bottom {
     height: auto;
     max-width: 100%;
   }
+  body.av-fullscreen-game .touch-controls {
+    flex: 0 0 auto;
+    margin: 10px -12px 0;
+  }
+
+  /* Con el D-pad táctil montado, el HUD compacto (una sola franja de iconos,
+     sin wrap de chips/botones largos) tiene una altura predecible: a
+     diferencia del caso general de arriba, aquí sí cabe todo en 100dvh sin
+     scroll de página. Sin esto, un motor con aspect-ratio muy vertical (ej.
+     Tetris, 1:2) se desborda del viewport y el D-pad fijo abajo obliga a
+     hacer scroll, tapando las filas superiores del tablero.
+     `position: fixed` en <html> y <body> (no solo `overflow: hidden`) porque
+     en iOS Safari el elemento que scrollea la página es <html>: sin fijar
+     ambos, el fondo sigue arrastrándose aunque el contenido quepa. */
+  html.av-touch-fit {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  body.av-fullscreen-game.av-touch-fit {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  body.av-fullscreen-game.av-touch-fit #root {
+    height: 100dvh;
+  }
+  body.av-fullscreen-game.av-touch-fit .av-main {
+    overflow: hidden;
+  }
+  body.av-fullscreen-game.av-touch-fit .crt {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 10px;
+  }
+  body.av-fullscreen-game.av-touch-fit .crt-screen {
+    width: auto;
+    height: 100%;
+    max-width: 100%;
+    min-height: 0;
+  }
+  body.av-fullscreen-game.av-touch-fit .touch-controls {
+    margin: 10px -12px 0;
+  }
+}
+
+/* Franja de stats compacta que reemplaza el HUD normal cuando el D-pad
+   táctil está montado: menos padding, sin el stat "Jugador", botones de
+   PAUSA/FIN/SALIR reducidos a icono (ver GamePlayerClient.tsx). */
+.player-hud.touch-hud {
+  padding: 10px 12px;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.player-hud.touch-hud .hud-actions .btn {
+  padding: 8px 12px;
+  min-width: 40px;
 }
 
 .player-hud {
@@ -1336,6 +1396,118 @@ body.av-fullscreen-game .crt-bottom {
   border-radius: 50%;
   background: var(--green);
   box-shadow: 0 0 6px var(--green);
+}
+
+/* D-pad + botones A/B táctiles, montados solo cuando `pointer: coarse` lo
+   detecta (ver lib/games/touch.ts). Franja fija abajo de la pantalla del
+   Reproductor, independiente del HUD de desktop. */
+.touch-controls {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg-2);
+  border-top: 1px solid var(--line);
+  /* touch-action: none evita el scroll/zoom del navegador al arrastrar sobre
+     los botones, y user-select evita el resaltado de texto en toques largos. */
+  touch-action: none;
+  user-select: none;
+}
+.touch-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--pixel);
+  color: var(--ink-dim);
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.touch-btn.pressed {
+  color: var(--cyan);
+  border-color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
+}
+.touch-btn.action-a.pressed,
+.touch-btn.action-b.pressed {
+  color: var(--magenta);
+  border-color: var(--magenta);
+  box-shadow: 0 0 10px rgba(255, 0, 110, 0.4);
+}
+[data-theme="light"] .touch-btn.pressed,
+[data-theme="light"] .touch-btn.action-a.pressed,
+[data-theme="light"] .touch-btn.action-b.pressed {
+  box-shadow: none;
+}
+
+.touch-dpad {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 4px;
+}
+.touch-dpad .touch-btn {
+  grid-column: auto;
+  grid-row: auto;
+}
+/* Triángulo en CSS puro: los glifos Unicode ▲▼◀▶ no comparten tamaño/peso
+   visual en la fuente pixel, así que ninguna dirección usa texto. */
+.dpad-arrow {
+  width: 0;
+  height: 0;
+  border: 7px solid transparent;
+}
+.dpad-arrow-up {
+  border-bottom-color: currentColor;
+  margin-bottom: 3px;
+}
+.dpad-arrow-down {
+  border-top-color: currentColor;
+  margin-top: 3px;
+}
+.dpad-arrow-left {
+  border-right-color: currentColor;
+  margin-right: 3px;
+}
+.dpad-arrow-right {
+  border-left-color: currentColor;
+  margin-left: 3px;
+}
+.dpad-up {
+  grid-column: 2;
+  grid-row: 1;
+}
+.dpad-left {
+  grid-column: 1;
+  grid-row: 2;
+}
+.dpad-right {
+  grid-column: 3;
+  grid-row: 2;
+}
+.dpad-down {
+  grid-column: 2;
+  grid-row: 3;
+}
+
+.touch-buttons {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+}
+.touch-buttons .touch-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  font-size: 16px;
+}
+.touch-buttons .action-a {
+  transform: translateY(-10px);
 }
 
 .arcade-canvas {

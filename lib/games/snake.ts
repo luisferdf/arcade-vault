@@ -3,7 +3,7 @@
 // 1 tecla pendiente), crecimiento por fruta, colisión contra bordes/cuerpo y
 // velocidad progresiva.
 
-import type { ArcadeGame, GameCallbacks } from "./engine";
+import type { ArcadeGame, GameCallbacks, TouchAction } from "./engine";
 import { DEFAULT_SKIN, type SkinId } from "./skins";
 import { FRUIT_ATLAS, FRUIT_NAMES, FRUIT_SPRITE_SRC } from "./snake-atlas";
 
@@ -377,5 +377,23 @@ export class SnakeGame implements ArcadeGame {
       this.rafId = null;
     }
     window.removeEventListener("keydown", this.handleKeyDown);
+  }
+
+  /**
+   * Mismo flanco que `handleKeyDown`: solo `pressed=true` gira (con el buffer
+   * de 1 pendiente y el bloqueo de reversa de 180°); `pressed=false` no hace
+   * nada. A y B sin uso.
+   */
+  handleTouchInput(action: TouchAction, pressed: boolean): void {
+    if (!pressed) return;
+    if (
+      action !== "up" &&
+      action !== "down" &&
+      action !== "left" &&
+      action !== "right"
+    )
+      return;
+    if (action === OPPOSITE[this.direction]) return;
+    this.pendingDirection = action;
   }
 }

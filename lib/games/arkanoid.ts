@@ -4,7 +4,7 @@
 // real se obtiene de ctx.canvas para escuchar mousemove/click sin tocar el DOM
 // fuera de lo que el motor recibe.
 
-import type { ArcadeGame, GameCallbacks } from "./engine";
+import type { ArcadeGame, GameCallbacks, TouchAction } from "./engine";
 import { DEFAULT_SKIN, type SkinId } from "./skins";
 import { LEVELS, type BlockColor } from "./arkanoid-levels";
 
@@ -578,5 +578,11 @@ export class ArkanoidGame implements ArcadeGame {
     window.removeEventListener("keyup", this.handleKeyUp);
     this.ctx.canvas.removeEventListener("mousemove", this.handleMouseMove);
     this.ctx.canvas.removeEventListener("click", this.handleClick);
+  }
+
+  /** ← / → mueven la pala mientras `pressed`, igual que `this.keys.ArrowLeft/Right`. Resto sin efecto. */
+  handleTouchInput(action: TouchAction, pressed: boolean): void {
+    if (action === "left") this.keys.ArrowLeft = pressed;
+    else if (action === "right") this.keys.ArrowRight = pressed;
   }
 }

@@ -2,7 +2,7 @@
 // Sin document.getElementById ni canvas global: W/H son la resolución lógica fija
 // y el CanvasRenderingContext2D se recibe como parámetro en cada draw().
 
-import type { ArcadeGame, GameCallbacks } from "./engine";
+import type { ArcadeGame, GameCallbacks, TouchAction } from "./engine";
 import { DEFAULT_SKIN, type SkinId } from "./skins";
 
 export const W = 800;
@@ -740,4 +740,27 @@ export class AsteroidsGame implements ArcadeGame {
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
   }
+
+  /**
+   * Traduce el D-pad/A táctil a los mismos códigos que `handleKeyDown`/`handleKeyUp`
+   * ya alimentan (`updateGame` no distingue el origen). ↓ y B no tienen uso en
+   * este motor.
+   */
+  handleTouchInput(action: TouchAction, pressed: boolean): void {
+    const code = TOUCH_CODE_MAP[action];
+    if (!code) return;
+    if (pressed) {
+      if (!this.keys[code]) this.justPressed[code] = true;
+      this.keys[code] = true;
+    } else {
+      this.keys[code] = false;
+    }
+  }
 }
+
+const TOUCH_CODE_MAP: Partial<Record<TouchAction, string>> = {
+  up: "ArrowUp",
+  left: "ArrowLeft",
+  right: "ArrowRight",
+  a: "Space",
+};

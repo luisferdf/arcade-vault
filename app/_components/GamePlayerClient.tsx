@@ -21,6 +21,12 @@ import {
   subscribeSkin,
   type SkinId,
 } from "@/lib/games/skins";
+import {
+  getIsTouchDeviceServerSnapshot,
+  getIsTouchDeviceSnapshot,
+  subscribeIsTouchDevice,
+} from "@/lib/games/touch";
+import { TouchControls } from "./TouchControls";
 
 export function GamePlayerClient({ game }: { game: Game | null }) {
   const router = useRouter();
@@ -46,6 +52,14 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     getSkinSnapshot,
     getSkinServerSnapshot,
   );
+  // Puntero coarse (dedo): reordena a layout táctil y monta el D-pad. Nunca
+  // por ancho de viewport -- evita falsos positivos en laptops táctiles.
+  const isTouchDevice = useSyncExternalStore(
+    subscribeIsTouchDevice,
+    getIsTouchDeviceSnapshot,
+    getIsTouchDeviceServerSnapshot,
+  );
+  const touchMode = Boolean(engine) && isTouchDevice;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ArcadeGame | null>(null);
@@ -60,6 +74,25 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     document.body.classList.add("av-fullscreen-game");
     return () => document.body.classList.remove("av-fullscreen-game");
   }, [engine]);
+
+  // En touchMode el HUD compacto (sin wrap impredecible de texto) hace viable
+  // encajar todo en 100dvh sin scroll de página -- a diferencia del HUD normal
+  // de móvil, que sí puede colapsar el canvas (ver comentario en globals.css).
+  // Sin esto, un motor con aspect-ratio muy vertical (ej. Tetris, 1:2) se
+  // desborda del viewport y el D-pad fijo abajo obliga a hacer scroll, tapando
+  // las filas superiores del tablero.
+  useEffect(() => {
+    if (!touchMode) return;
+    // `<html>` también, no solo `<body>`: en iOS Safari es el elemento que
+    // scrollea la página, así que `overflow: hidden` solo en `<body>` no
+    // basta para bloquear el scroll de fondo.
+    document.documentElement.classList.add("av-touch-fit");
+    document.body.classList.add("av-touch-fit");
+    return () => {
+      document.documentElement.classList.remove("av-touch-fit");
+      document.body.classList.remove("av-touch-fit");
+    };
+  }, [touchMode]);
 
   useEffect(() => {
     if (over || paused || engine) return;
@@ -175,14 +208,16 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
 
   return (
     <div className="av-player fade-in">
-      <div className="player-hud">
+      <div className={"player-hud" + (touchMode ? " touch-hud" : "")}>
         <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-          <div className="hud-stat">
-            <div className="l">Jugador</div>
-            <div className="v" style={{ color: "var(--ink)" }}>
-              {name}
+          {!touchMode && (
+            <div className="hud-stat">
+              <div className="l">Jugador</div>
+              <div className="v" style={{ color: "var(--ink)" }}>
+                {name}
+              </div>
             </div>
-          </div>
+          )}
           <div className="hud-stat">
             <div className="l">Puntuación</div>
             <div className="v">{score.toLocaleString("es-ES")}</div>
@@ -221,17 +256,22 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
               ))}
             </div>
           )}
-          <button className="btn yellow" onClick={togglePause}>
-            {paused ? "REANUDAR" : "PAUSA"}
+          <button
+            className="btn yellow"
+            onClick={togglePause}
+            aria-label={paused ? "Reanudar" : "Pausa"}
+          >
+            {touchMode ? (paused ? "▶" : "⏸") : paused ? "REANUDAR" : "PAUSA"}
           </button>
-          <button className="btn magenta" onClick={endGame}>
-            FIN
+          <button className="btn magenta" onClick={endGame} aria-label="Fin">
+            {touchMode ? "⏹" : "FIN"}
           </button>
           <button
             className="btn ghost"
             onClick={() => router.push(`/juego/${game.id}`)}
+            aria-label="Salir"
           >
-            SALIR
+            {touchMode ? "⏏" : "SALIR"}
           </button>
         </div>
       </div>
@@ -293,6 +333,14 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
           <span>CARGA · 1MB</span>
         </div>
       </div>
+
+      {touchMode && (
+        <TouchControls
+          onInput={(action, pressed) =>
+            engineRef.current?.handleTouchInput?.(action, pressed)
+          }
+        />
+      )}
 
       {over && (
         <div className="modal-bd">

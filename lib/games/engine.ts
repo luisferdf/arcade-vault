@@ -33,7 +33,16 @@ export interface ArcadeGame {
    * la instancia (fallback, no primera opción).
    */
   setSkin?(skin: SkinId): void;
+  /**
+   * Traduce un botón del D-pad/A-B táctil al mismo estado interno que ya
+   * alimenta el control de teclado. Se llama en el flanco de touchstart
+   * (pressed: true) y touchend/touchcancel (pressed: false), nunca por
+   * polling. Un motor que no implemente esta acción simplemente la ignora.
+   */
+  handleTouchInput?(action: TouchAction, pressed: boolean): void;
 }
+
+export type TouchAction = "up" | "down" | "left" | "right" | "a" | "b";
 
 /** Stat extra que el Reproductor pinta en su HUD, alimentada por `onStatChange`. */
 export interface ExtraStat {

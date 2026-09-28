@@ -5,7 +5,7 @@
 // el original vivían en el DOM (sidebar + <canvas> secundario), se dibujan aquí
 // dentro del mismo canvas principal, en una franja translúcida superpuesta al tablero.
 
-import type { ArcadeGame, GameCallbacks } from "./engine";
+import type { ArcadeGame, GameCallbacks, TouchAction } from "./engine";
 import { DEFAULT_SKIN, type SkinId } from "./skins";
 
 const COLS = 10;
@@ -164,6 +164,14 @@ const PIECES: (Shape | null)[] = [
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+
+// DAS (delayed auto shift) táctil para ←/→/↓: el auto-repeat de `keydown` del
+// sistema operativo no existe en touch, así que el motor lo replica a mano.
+// Calibrado contra el auto-repeat típico de teclado (~300-500ms de delay
+// inicial, luego cada 30-50ms).
+const TOUCH_DAS_DELAY_MS = 320;
+const TOUCH_DAS_REPEAT_MS = 40;
+type TouchDasAction = "left" | "right" | "down";
 
 const CONTROL_KEYS = new Set([
   "ArrowLeft",
@@ -467,6 +475,13 @@ export class TetrisGame implements ArcadeGame {
   private prevLevel: number;
   private prevLines: number;
 
+  // Estado del DAS táctil: null cuando no hay dirección sostenida.
+  private touchDas: {
+    action: TouchDasAction;
+    elapsed: number;
+    phase: "delay" | "repeat";
+  } | null = null;
+
   private handleKeyDown = (e: KeyboardEvent) => {
     if (CONTROL_KEYS.has(e.code)) e.preventDefault();
     if (e.code === "KeyP") {
@@ -508,6 +523,18 @@ export class TetrisGame implements ArcadeGame {
     drawHUD(this.ctx, this.palette, this.state);
   }
 
+  /** Mismo movimiento que los casos ArrowLeft/ArrowRight/ArrowDown de `handleKeyDown`. */
+  private applyTouchDasMove(action: TouchDasAction) {
+    const { board, current } = this.state;
+    if (action === "left") {
+      if (!collide(board, current.shape, current.x - 1, current.y)) current.x--;
+    } else if (action === "right") {
+      if (!collide(board, current.shape, current.x + 1, current.y)) current.x++;
+    } else {
+      softDrop(this.state);
+    }
+  }
+
   private emitChanges() {
     if (this.state.score !== this.prevScore) {
       this.prevScore = this.state.score;
@@ -535,6 +562,20 @@ export class TetrisGame implements ArcadeGame {
         current.y++;
       } else {
         lockPiece(this.state);
+      }
+    }
+
+    if (this.touchDas && !this.state.gameOver) {
+      this.touchDas.elapsed += dt;
+      if (this.touchDas.phase === "delay") {
+        if (this.touchDas.elapsed >= TOUCH_DAS_DELAY_MS) {
+          this.touchDas.elapsed = 0;
+          this.touchDas.phase = "repeat";
+          this.applyTouchDasMove(this.touchDas.action);
+        }
+      } else if (this.touchDas.elapsed >= TOUCH_DAS_REPEAT_MS) {
+        this.touchDas.elapsed = 0;
+        this.applyTouchDasMove(this.touchDas.action);
       }
     }
 
@@ -607,5 +648,41 @@ export class TetrisGame implements ArcadeGame {
       this.rafId = null;
     }
     window.removeEventListener("keydown", this.handleKeyDown);
+    this.touchDas = null;
+  }
+
+  /**
+   * ↑ y A son de flanco único (rotar / hard-drop), como `ArrowUp`/`Space` en
+   * `handleKeyDown`. ←/→/↓ arrancan el DAS táctil en el flanco `pressed=true`
+   * (con un primer movimiento inmediato, igual que el primer `keydown`) y lo
+   * detienen en `pressed=false`; el resto de ticks los aplica el loop.
+   */
+  handleTouchInput(action: TouchAction, pressed: boolean): void {
+    if (this.state.gameOver || this.rafId === null) return;
+
+    if (action === "up") {
+      if (!pressed) return;
+      tryRotate(this.state.board, this.state.current);
+      this.emitChanges();
+      this.draw();
+      return;
+    }
+    if (action === "a") {
+      if (!pressed) return;
+      hardDrop(this.state);
+      this.emitChanges();
+      this.draw();
+      return;
+    }
+    if (action !== "left" && action !== "right" && action !== "down") return;
+
+    if (pressed) {
+      this.applyTouchDasMove(action);
+      this.emitChanges();
+      this.draw();
+      this.touchDas = { action, elapsed: 0, phase: "delay" };
+    } else if (this.touchDas?.action === action) {
+      this.touchDas = null;
+    }
   }
 }

@@ -1400,8 +1400,17 @@ body.av-fullscreen-game .crt-bottom {
 
 /* D-pad + botones A/B táctiles, montados solo cuando `pointer: coarse` lo
    detecta (ver lib/games/touch.ts). Franja fija abajo de la pantalla del
-   Reproductor, independiente del HUD de desktop. */
+   Reproductor, independiente del HUD de desktop.
+   Aspecto "gamepad físico MK-II" (ver references/gamepad-assets/README.md):
+   paleta fija tipo hardware, deliberadamente ajena al theming del sitio
+   (`[data-theme]`) — un control físico no cambia de color con la luz
+   ambiente, así que estas variables locales `--gp-*` no reusan los tokens
+   `--cyan`/`--magenta`/etc. del tema, que sí varían en modo claro. */
 .touch-controls {
+  --gp-cyan: #00f5ff;
+  --gp-magenta: #ff006e;
+  --gp-ink-dim: #8a8fb5;
+  --gp-line: rgba(0, 245, 255, 0.18);
   position: sticky;
   bottom: 0;
   z-index: 6;
@@ -1409,51 +1418,123 @@ body.av-fullscreen-game .crt-bottom {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px 20px calc(14px + env(safe-area-inset-bottom, 0px));
-  background: var(--bg-2);
-  border-top: 1px solid var(--line);
+  padding: 16px 22px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, #1c1c28 0%, #0c0c14 100%);
+  border-top: 1px solid var(--gp-line);
+  border-radius: 20px 20px 0 0;
+  box-shadow:
+    0 -14px 36px -18px rgba(0, 245, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
   /* touch-action: none evita el scroll/zoom del navegador al arrastrar sobre
      los botones, y user-select evita el resaltado de texto en toques largos. */
   touch-action: none;
   user-select: none;
 }
+.touch-controls::before {
+  content: "";
+  position: absolute;
+  inset: 4px 4px 0;
+  border: 1px solid rgba(0, 245, 255, 0.12);
+  border-radius: 16px 16px 0 0;
+  pointer-events: none;
+}
+
 .touch-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--pixel);
-  color: var(--ink-dim);
-  background: var(--bg-3);
-  border: 1px solid var(--line);
-  border-radius: 8px;
   -webkit-tap-highlight-color: transparent;
-}
-.touch-btn.pressed {
-  color: var(--cyan);
-  border-color: var(--cyan);
-  box-shadow: 0 0 10px rgba(0, 245, 255, 0.4);
-}
-.touch-btn.action-a.pressed,
-.touch-btn.action-b.pressed {
-  color: var(--magenta);
-  border-color: var(--magenta);
-  box-shadow: 0 0 10px rgba(255, 0, 110, 0.4);
-}
-[data-theme="light"] .touch-btn.pressed,
-[data-theme="light"] .touch-btn.action-a.pressed,
-[data-theme="light"] .touch-btn.action-b.pressed {
-  box-shadow: none;
+  transition:
+    transform 80ms,
+    box-shadow 140ms,
+    color 140ms,
+    border-color 140ms,
+    background 140ms;
 }
 
+/* ===== D-pad ===== */
 .touch-dpad {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(3, 44px);
   grid-template-rows: repeat(3, 44px);
   gap: 4px;
 }
+/* Hub central: caja hundida (::before) + gema romboidal pulsante (::after),
+   siempre centrada en la celda vacía del grid — no requiere un nodo extra
+   en el JSX. */
+.touch-dpad::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 50% 50%, #181822 0%, #08080d 80%);
+  border: 1px solid rgba(0, 245, 255, 0.15);
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  pointer-events: none;
+}
+.touch-dpad::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(-50%, -50%);
+  background: var(--gp-cyan);
+  box-shadow:
+    0 0 10px var(--gp-cyan),
+    inset 0 0 4px rgba(0, 0, 0, 0.5);
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  animation: gp-pulse-led 2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes gp-pulse-led {
+  50% {
+    opacity: 0.35;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+}
 .touch-dpad .touch-btn {
+  position: relative;
+  z-index: 1;
   grid-column: auto;
   grid-row: auto;
+  color: var(--gp-ink-dim);
+  background: linear-gradient(180deg, #1a1a25, #0a0a12);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 0 #050507,
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.6);
+}
+.touch-dpad .touch-btn.pressed {
+  transform: translateY(3px);
+  color: var(--gp-cyan);
+  background: linear-gradient(180deg, #08161e, #030a0e);
+  border-color: var(--gp-cyan);
+  box-shadow:
+    0 1px 0 #050507,
+    inset 0 0 16px rgba(0, 245, 255, 0.45),
+    0 0 16px rgba(0, 245, 255, 0.5);
+}
+.touch-dpad .touch-btn.pressed .dpad-arrow {
+  filter: drop-shadow(0 0 6px var(--gp-cyan))
+    drop-shadow(0 0 12px var(--gp-cyan));
+}
+.touch-dpad .touch-btn.locked {
+  color: rgba(138, 143, 181, 0.35);
+  background: linear-gradient(180deg, #16161f, #08080d);
+  border-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 2px 0 #050507;
 }
 /* Triángulo en CSS puro: los glifos Unicode ▲▼◀▶ no comparten tamaño/peso
    visual en la fuente pixel, así que ninguna dirección usa texto. */
@@ -1461,6 +1542,7 @@ body.av-fullscreen-game .crt-bottom {
   width: 0;
   height: 0;
   border: 7px solid transparent;
+  transition: filter 140ms;
 }
 .dpad-arrow-up {
   border-bottom-color: currentColor;
@@ -1495,19 +1577,84 @@ body.av-fullscreen-game .crt-bottom {
   grid-row: 3;
 }
 
+/* ===== Botones A/B ===== */
 .touch-buttons {
   display: flex;
   align-items: flex-end;
-  gap: 14px;
+  gap: 18px;
 }
 .touch-buttons .touch-btn {
-  width: 56px;
-  height: 56px;
+  position: relative;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  font-size: 16px;
+  padding: 0;
+  font-size: 20px;
+  border: 2px solid transparent;
+  box-shadow:
+    0 6px 0 #050507,
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.4);
 }
 .touch-buttons .action-a {
+  color: #fff;
+  border-color: var(--gp-magenta);
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      rgba(255, 255, 255, 0.25),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 55%,
+      rgba(255, 0, 110, 0.7),
+      rgba(110, 0, 40, 0.95) 75%
+    );
+  text-shadow:
+    0 0 8px var(--gp-magenta),
+    0 0 18px var(--gp-magenta),
+    0 1px 0 rgba(0, 0, 0, 0.6);
   transform: translateY(-10px);
+}
+.touch-buttons .action-b {
+  color: #fff;
+  border-color: var(--gp-cyan);
+  background:
+    radial-gradient(
+      circle at 32% 26%,
+      rgba(255, 255, 255, 0.25),
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 55%,
+      rgba(0, 200, 230, 0.7),
+      rgba(0, 50, 70, 0.95) 75%
+    );
+  text-shadow:
+    0 0 8px var(--gp-cyan),
+    0 0 18px var(--gp-cyan),
+    0 1px 0 rgba(0, 0, 0, 0.6);
+}
+.touch-buttons .action-a.pressed {
+  transform: translateY(-6px) scale(0.97);
+  box-shadow:
+    0 1px 0 #050507,
+    0 0 32px rgba(255, 0, 110, 0.55),
+    inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+.touch-buttons .action-b.pressed {
+  transform: translateY(4px) scale(0.97);
+  box-shadow:
+    0 1px 0 #050507,
+    0 0 32px rgba(0, 245, 255, 0.55),
+    inset 0 0 18px rgba(0, 0, 0, 0.5);
+}
+.touch-buttons .touch-btn.locked {
+  color: rgba(230, 233, 255, 0.25);
+  border-color: rgba(138, 143, 181, 0.25);
+  background: radial-gradient(circle at 50% 55%, #1a1a22, #0c0c12 75%);
+  box-shadow: 0 4px 0 #050507;
+  text-shadow: none;
 }
 
 .arcade-canvas {

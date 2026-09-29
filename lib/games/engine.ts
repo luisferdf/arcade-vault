@@ -65,4 +65,9 @@ export interface GameEngineEntry {
   extraStats?: ExtraStat[];
   /** `false` oculta el bloque de vidas del HUD (juegos sin vidas, ej. Tetris). */
   usesLives?: boolean;
+  /**
+   * Acciones táctiles sin efecto en este motor. TouchControls las muestra
+   * atenuadas y no dispara handleTouchInput para ellas.
+   */
+  unusedTouchActions?: TouchAction[];
 }

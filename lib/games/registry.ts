@@ -18,6 +18,7 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     height: ASTEROIDS_H,
     usesLives: true,
     skins: SKIN_IDS,
+    unusedTouchActions: ["down", "b"],
     create: (ctx, callbacks, skin) => new AsteroidsGame(ctx, callbacks, skin),
   },
   tetris: {
@@ -26,6 +27,7 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     usesLives: false,
     extraStats: [{ key: "lines", label: "LÍNEAS" }],
     skins: SKIN_IDS,
+    unusedTouchActions: ["b"],
     create: (ctx, callbacks, skin) => new TetrisGame(ctx, callbacks, skin),
   },
   arkanoid: {
@@ -33,6 +35,7 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     height: ARKANOID_H,
     usesLives: true,
     skins: SKIN_IDS,
+    unusedTouchActions: ["up", "down", "a", "b"],
     create: (ctx, callbacks, skin) => new ArkanoidGame(ctx, callbacks, skin),
   },
   snake: {
@@ -40,6 +43,7 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     height: SNAKE_H,
     usesLives: false,
     skins: SKIN_IDS,
+    unusedTouchActions: ["a", "b"],
     create: (ctx, callbacks, skin) => new SnakeGame(ctx, callbacks, skin),
   },
 };

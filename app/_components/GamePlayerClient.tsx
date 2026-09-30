@@ -9,7 +9,12 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "@/lib/games";
-import { getStoredUser } from "@/lib/auth";
+import {
+  getUserServerSnapshot,
+  getUserSnapshot,
+  parseStoredUser,
+  subscribeUser,
+} from "@/lib/auth";
 import { saveScore } from "@/lib/scores";
 import type { ArcadeGame } from "@/lib/games/engine";
 import { getEngine } from "@/lib/games/registry";
@@ -35,11 +40,20 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
-  const [level, setLevel] = useState(1);
+  const [engineLevel, setLevel] = useState(1);
+  // La arena simulada no tiene nivel propio: sube cada 2500 puntos.
+  const level = engine ? engineLevel : 1 + Math.floor(score / 2500);
   const [stats, setStats] = useState<Record<string, number>>({});
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState(false);
-  const [name, setName] = useState("INVITADO");
+  // Nombre escrito a mano en el modal; mientras sea null se usa el de la sesión.
+  const [typedName, setName] = useState<string | null>(null);
+  const rawUser = useSyncExternalStore(
+    subscribeUser,
+    getUserSnapshot,
+    getUserServerSnapshot,
+  );
+  const name = typedName ?? parseStoredUser(rawUser)?.name ?? "INVITADO";
   const [saved, setSaved] = useState(false);
   // Cambia en cada partida nueva: fuerza a recrear la instancia del motor.
   const [runId, setRunId] = useState(0);
@@ -63,11 +77,6 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ArcadeGame | null>(null);
-
-  useEffect(() => {
-    const user = getStoredUser();
-    if (user) setName(user.name);
-  }, []);
 
   useEffect(() => {
     if (!engine) return;
@@ -102,11 +111,6 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     );
     return () => clearInterval(t);
   }, [over, paused, engine]);
-
-  useEffect(() => {
-    if (engine) return;
-    if (score > 0 && score % 2500 < 100) setLevel((l) => l + 1);
-  }, [score, engine]);
 
   useEffect(() => {
     if (!engine) return;
@@ -339,6 +343,7 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
           onInput={(action, pressed) =>
             engineRef.current?.handleTouchInput?.(action, pressed)
           }
+          unusedActions={engine?.unusedTouchActions}
         />
       )}
 
@@ -368,7 +373,10 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
               <button className="btn" onClick={restart}>
                 JUGAR DE NUEVO
               </button>
-              <button className="btn magenta" onClick={() => router.push("/")}>
+              <button
+                className="btn magenta"
+                onClick={() => router.push("/biblioteca")}
+              >
                 VOLVER AL VAULT
               </button>
             </div>

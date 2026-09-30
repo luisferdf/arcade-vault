@@ -10,6 +10,7 @@ validación de contraste (dark y light); ❌ solo por un bloqueo duro documentad
 | `tetris`     | ❌      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `clasico` = réplica histórica exacta; rejilla (1.14:1) y fantasma (<2:1) bajo umbral decorativo, regresión cero                                                                |
 | `arkanoid`   | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta (bola cian = bloques cian, separadas solo por forma); bloques por nombre `BlockColor`, `arkanoid-levels.ts` intacto; `setSkin()` en caliente |
 | `snake`      | ✅      | ✅    | ✅   | —          | ✅                | 2026-09-16           | `neon` = réplica histórica exacta (cabeza/cuerpo solo separados por tono, 1.01:1); fruta = sprite PNG, la skin solo controla su fallback; `setSkin()` en caliente              |
+| `frogger`    | ✅      | ✅    | ❌   | —          | ✅                | 2026-09-30           | bloqueo duro: `neon` = réplica exacta, tronco/río 2.15:1, rana/boca 4.02:1, rana≈tortuga (1.57:1, solo tono); `setSkin()` en caliente                                          |
 
 ## Infraestructura compartida
 

@@ -5,6 +5,7 @@ import type { TouchAction } from "@/lib/games/engine";
 
 interface TouchControlsProps {
   onInput: (action: TouchAction, pressed: boolean) => void;
+  unusedActions?: TouchAction[];
 }
 
 /**
@@ -15,18 +16,18 @@ function DpadArrow({ dir }: { dir: "up" | "down" | "left" | "right" }) {
   return <span className={`dpad-arrow dpad-arrow-${dir}`} />;
 }
 
-export function TouchControls({ onInput }: TouchControlsProps) {
+export function TouchControls({ onInput, unusedActions }: TouchControlsProps) {
+  const locked = (action: TouchAction) =>
+    unusedActions?.includes(action) ?? false;
+
   // Red de seguridad: si el navegador se pierde un touchend/touchcancel (dedo
   // sale del viewport, notificación del sistema), no debe quedar un botón
   // "trabado" en pressed:true al perder el foco de la ventana.
-  const releaseAllRef = useRef<() => void>(() => {});
   const releasers = useRef(new Set<() => void>());
-  releaseAllRef.current = () => {
-    releasers.current.forEach((release) => release());
-  };
 
   useEffect(() => {
-    const releaseAll = () => releaseAllRef.current();
+    const active = releasers.current;
+    const releaseAll = () => active.forEach((release) => release());
     window.addEventListener("blur", releaseAll);
     document.addEventListener("visibilitychange", releaseAll);
     return () => {
@@ -54,6 +55,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="dpad-up"
+          locked={locked("up")}
         />
         <div />
         <TouchButton
@@ -62,6 +64,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="dpad-left"
+          locked={locked("left")}
         />
         <div />
         <TouchButton
@@ -70,6 +73,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="dpad-right"
+          locked={locked("right")}
         />
         <div />
         <TouchButton
@@ -78,6 +82,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="dpad-down"
+          locked={locked("down")}
         />
         <div />
       </div>
@@ -88,6 +93,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="action-b"
+          locked={locked("b")}
         />
         <TouchButton
           action="a"
@@ -95,6 +101,7 @@ export function TouchControls({ onInput }: TouchControlsProps) {
           onInput={onInput}
           registerReleaser={registerReleaser}
           className="action-a"
+          locked={locked("a")}
         />
       </div>
     </div>
@@ -107,6 +114,7 @@ interface TouchButtonProps {
   className: string;
   onInput: (action: TouchAction, pressed: boolean) => void;
   registerReleaser: (release: () => void) => () => void;
+  locked?: boolean;
 }
 
 function TouchButton({
@@ -115,6 +123,7 @@ function TouchButton({
   className,
   onInput,
   registerReleaser,
+  locked = false,
 }: TouchButtonProps) {
   const [pressed, setPressed] = useState(false);
   // Ids de los dedos activos sobre este botón, para que soltar uno no
@@ -140,7 +149,7 @@ function TouchButton({
   // sobre el D-pad.
   useEffect(() => {
     const el = buttonRef.current;
-    if (!el) return;
+    if (!el || locked) return;
 
     const handleStart = (e: TouchEvent) => {
       e.preventDefault();
@@ -173,14 +182,15 @@ function TouchButton({
       el.removeEventListener("touchend", handleEnd);
       el.removeEventListener("touchcancel", handleEnd);
     };
-  }, [action, onInput]);
+  }, [action, onInput, locked]);
 
   return (
     <button
       ref={buttonRef}
       type="button"
-      className={`touch-btn ${className}${pressed ? " pressed" : ""}`}
+      className={`touch-btn ${className}${pressed ? " pressed" : ""}${locked ? " locked" : ""}`}
       aria-label={action}
+      aria-disabled={locked}
     >
       {label}
     </button>

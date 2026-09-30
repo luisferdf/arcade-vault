@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
-  getStoredUser,
+  getUserServerSnapshot,
+  getUserSnapshot,
+  parseStoredUser,
   setStoredUser,
-  USER_CHANGED_EVENT,
-  type StoredUser,
+  subscribeUser,
 } from "@/lib/auth";
 import {
   getThemeServerSnapshot,
@@ -18,8 +19,15 @@ import {
 
 export function Nav() {
   const pathname = usePathname();
-  const [user, setUser] = useState<StoredUser | null>(null);
   const [open, setOpen] = useState(false);
+  // La sesión falsa vive en localStorage (fuera de React): store externo, igual
+  // que el tema. En SSR no hay sesión; tras hidratar se lee el valor real.
+  const rawUser = useSyncExternalStore(
+    subscribeUser,
+    getUserSnapshot,
+    getUserServerSnapshot,
+  );
+  const user = useMemo(() => parseStoredUser(rawUser), [rawUser]);
   // El tema vive en localStorage (fuera de React): se lee como store externo para
   // no desincronizar con el `data-theme` que fija el script anti-FOUC.
   const theme = useSyncExternalStore(
@@ -27,17 +35,6 @@ export function Nav() {
     getThemeSnapshot,
     getThemeServerSnapshot,
   );
-
-  useEffect(() => {
-    setUser(getStoredUser());
-    const onChange = () => setUser(getStoredUser());
-    window.addEventListener(USER_CHANGED_EVENT, onChange);
-    window.addEventListener("storage", onChange);
-    return () => {
-      window.removeEventListener(USER_CHANGED_EVENT, onChange);
-      window.removeEventListener("storage", onChange);
-    };
-  }, []);
 
   // Mantiene el atributo del <html> alineado con el store (p. ej. si el tema lo
   // cambió otra pestaña vía evento `storage`).

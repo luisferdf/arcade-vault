@@ -210,6 +210,12 @@ export class ArkanoidGame implements ArcadeGame {
   private prevLives = 3;
   private prevLevel = 1;
 
+  // Caché de los textos del HUD del canvas (evita un template string por frame).
+  private hudScore = -1;
+  private hudScoreText = "";
+  private hudLevel = -1;
+  private hudLevelText = "";
+
   private handleKeyDown = (e: KeyboardEvent) => {
     if (CONTROL_KEYS.has(e.key)) e.preventDefault();
     if (e.key === "ArrowLeft" || e.key === "ArrowRight")
@@ -307,6 +313,13 @@ export class ArkanoidGame implements ArcadeGame {
     this.ball.vy = BASE_BALL_VY * level.speed;
   }
 
+  /** Equivale a `blocks.every((b) => !b.alive)` sin crear un closure. */
+  private allBlocksDead(): boolean {
+    const blocks = this.blocks;
+    for (let i = 0; i < blocks.length; i++) if (blocks[i].alive) return false;
+    return true;
+  }
+
   private update(dt: number) {
     const { paddle, ball } = this;
 
@@ -342,7 +355,9 @@ export class ArkanoidGame implements ArcadeGame {
       ball.vy = -Math.abs(ball.vy);
     }
 
-    for (const block of this.blocks) {
+    const blocks = this.blocks;
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
       if (!block.alive) continue;
       if (collideAABB(ball, block)) {
         block.alive = false;
@@ -356,7 +371,7 @@ export class ArkanoidGame implements ArcadeGame {
         });
         this.score += 10;
         ball.vy = -ball.vy;
-        if (this.blocks.every((b) => !b.alive)) {
+        if (this.allBlocksDead()) {
           if (this.currentLevel < 5) this.loadLevel(this.currentLevel + 1);
           else this.state = "win";
         }
@@ -364,10 +379,16 @@ export class ArkanoidGame implements ArcadeGame {
       }
     }
 
-    for (const exp of this.explosions) exp.elapsed += dt * 1000;
-    this.explosions = this.explosions.filter(
-      (exp) => exp.elapsed < EXPLOSION_DURATION,
-    );
+    // Avanza y compacta en sitio (orden estable) en vez de `filter`, que
+    // creaba un array nuevo cada frame aunque no hubiera explosiones.
+    const explosions = this.explosions;
+    let kept = 0;
+    for (let i = 0; i < explosions.length; i++) {
+      const exp = explosions[i];
+      exp.elapsed += dt * 1000;
+      if (exp.elapsed < EXPLOSION_DURATION) explosions[kept++] = exp;
+    }
+    explosions.length = kept;
 
     if (ball.y > H) {
       this.lives--;
@@ -434,7 +455,9 @@ export class ArkanoidGame implements ArcadeGame {
     ctx.fillStyle = palette.bg;
     ctx.fillRect(0, 0, W, H);
 
-    for (const block of this.blocks) {
+    const blocks = this.blocks;
+    for (let i = 0; i < blocks.length; i++) {
+      const block = blocks[i];
       if (!block.alive) continue;
       ctx.fillStyle = palette.blocks[block.color];
       ctx.fillRect(block.x, block.y, block.w, block.h);
@@ -442,7 +465,9 @@ export class ArkanoidGame implements ArcadeGame {
 
     // Destello de rotura procedural: rectángulo del color del bloque que se
     // desvanece y encoge durante EXPLOSION_DURATION ms.
-    for (const exp of this.explosions) {
+    const explosions = this.explosions;
+    for (let i = 0; i < explosions.length; i++) {
+      const exp = explosions[i];
       const t = exp.elapsed / EXPLOSION_DURATION;
       const alpha = Math.max(0, 1 - t);
       const grow = t * 10;
@@ -475,9 +500,18 @@ export class ArkanoidGame implements ArcadeGame {
       ctx.font = "bold 18px monospace";
       ctx.textAlign = "left";
       ctx.textBaseline = "top";
-      ctx.fillText(`Score: ${this.score}`, 10, 10);
+      // Textos del HUD cacheados: solo se reconstruyen al cambiar el valor.
+      if (this.score !== this.hudScore) {
+        this.hudScore = this.score;
+        this.hudScoreText = `Score: ${this.score}`;
+      }
+      if (this.currentLevel !== this.hudLevel) {
+        this.hudLevel = this.currentLevel;
+        this.hudLevelText = `Nivel: ${this.currentLevel}`;
+      }
+      ctx.fillText(this.hudScoreText, 10, 10);
       ctx.textAlign = "center";
-      ctx.fillText(`Nivel: ${this.currentLevel}`, W / 2, 10);
+      ctx.fillText(this.hudLevelText, W / 2, 10);
       const ballSize = 16;
       const ballSpacing = 4;
       for (let i = 0; i < this.lives; i++) {

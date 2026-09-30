@@ -190,8 +190,17 @@ export class SnakeGame implements ArcadeGame {
     this.pendingDirection = null;
   }
 
+  /** ¿Hay algún segmento en (x, y) en píxeles? Bucle indexado: sin closure por llamada. */
+  private hasSegmentAt(x: number, y: number): boolean {
+    const segs = this.segments;
+    for (let i = 0; i < segs.length; i++) {
+      if (segs[i].x === x && segs[i].y === y) return true;
+    }
+    return false;
+  }
+
   private isCellFree(col: number, row: number): boolean {
-    return !this.segments.some((s) => s.x / CELL === col && s.y / CELL === row);
+    return !this.hasSegmentAt(col * CELL, row * CELL);
   }
 
   private spawnFruit() {
@@ -206,7 +215,8 @@ export class SnakeGame implements ArcadeGame {
       attempts++;
     } while (!this.isCellFree(col, row) && attempts < 1000);
 
-    this.fruit = { x: col * CELL, y: row * CELL };
+    this.fruit.x = col * CELL;
+    this.fruit.y = row * CELL;
     this.fruitSprite =
       FRUIT_NAMES[Math.floor(Math.random() * FRUIT_NAMES.length)];
   }
@@ -223,25 +233,23 @@ export class SnakeGame implements ArcadeGame {
 
     const vec = DIR_VECTOR[this.direction];
     const head = this.segments[0];
-    const newHead: Point = {
-      x: head.x + vec.x * CELL,
-      y: head.y + vec.y * CELL,
-    };
+    const nx = head.x + vec.x * CELL;
+    const ny = head.y + vec.y * CELL;
 
-    if (newHead.x < 0 || newHead.x >= W || newHead.y < 0 || newHead.y >= H) {
+    if (nx < 0 || nx >= W || ny < 0 || ny >= H) {
       this.state = "gameover";
       return;
     }
 
-    if (this.segments.some((s) => s.x === newHead.x && s.y === newHead.y)) {
+    // La cola cuenta como obstáculo (se comprueba antes de retirarla), igual que antes.
+    if (this.hasSegmentAt(nx, ny)) {
       this.state = "gameover";
       return;
     }
 
-    this.segments.unshift(newHead);
-
-    const ateFruit = newHead.x === this.fruit.x && newHead.y === this.fruit.y;
+    const ateFruit = nx === this.fruit.x && ny === this.fruit.y;
     if (ateFruit) {
+      this.segments.unshift({ x: nx, y: ny });
       this.score += SCORE_PER_FRUIT;
       this.fruitsEaten++;
       if (this.fruitsEaten % SPEEDUP_EVERY_FRUITS === 0) {
@@ -253,7 +261,11 @@ export class SnakeGame implements ArcadeGame {
       }
       this.spawnFruit();
     } else {
-      this.segments.pop();
+      // Sin crecimiento: la cola retirada se recicla como nueva cabeza (cero asignaciones por paso).
+      const tail = this.segments.pop()!;
+      tail.x = nx;
+      tail.y = ny;
+      this.segments.unshift(tail);
     }
   }
 
@@ -293,11 +305,14 @@ export class SnakeGame implements ArcadeGame {
 
     this.drawFruit();
 
-    for (let i = this.segments.length - 1; i >= 0; i--) {
-      const s = this.segments[i];
-      ctx.fillStyle = i === 0 ? palette.head : palette.body;
-      ctx.fillRect(s.x, s.y, CELL, CELL);
+    // Cola → cabeza (la cabeza queda encima); fillStyle asignado una vez por rol.
+    const segs = this.segments;
+    ctx.fillStyle = palette.body;
+    for (let i = segs.length - 1; i >= 1; i--) {
+      ctx.fillRect(segs[i].x, segs[i].y, CELL, CELL);
     }
+    ctx.fillStyle = palette.head;
+    ctx.fillRect(segs[0].x, segs[0].y, CELL, CELL);
 
     if (this.state === "gameover") {
       ctx.fillStyle = palette.overlay;
@@ -377,6 +392,7 @@ export class SnakeGame implements ArcadeGame {
       this.rafId = null;
     }
     window.removeEventListener("keydown", this.handleKeyDown);
+    this.fruitImage.onload = null;
   }
 
   /**

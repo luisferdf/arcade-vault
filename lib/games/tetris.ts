@@ -378,14 +378,20 @@ function drawGrid(ctx: CanvasRenderingContext2D, palette: TetrisPalette) {
   }
 }
 
+/** Fondo + rejilla: no cambian durante la partida, solo con la skin. */
+function drawBackground(ctx: CanvasRenderingContext2D, palette: TetrisPalette) {
+  ctx.fillStyle = palette.bg;
+  ctx.fillRect(0, 0, W, H);
+  drawGrid(ctx, palette);
+}
+
 function drawBoard(
   ctx: CanvasRenderingContext2D,
   palette: TetrisPalette,
   state: GameState,
+  bg: HTMLCanvasElement,
 ) {
-  ctx.fillStyle = palette.bg;
-  ctx.fillRect(0, 0, W, H);
-  drawGrid(ctx, palette);
+  ctx.drawImage(bg, 0, 0, W, H);
 
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
@@ -426,6 +432,8 @@ function drawHUD(
   ctx: CanvasRenderingContext2D,
   palette: TetrisPalette,
   state: GameState,
+  scoreText: string,
+  levelLinesText: string,
 ) {
   ctx.fillStyle = palette.hudBg;
   ctx.fillRect(0, 0, W, HUD_H);
@@ -440,8 +448,8 @@ function drawHUD(
   ctx.font = "11px monospace";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(`SCORE ${state.score.toLocaleString("es-ES")}`, 8, 16);
-  ctx.fillText(`LEVEL ${state.level}   LINES ${state.lines}`, 8, 32);
+  ctx.fillText(scoreText, 8, 16);
+  ctx.fillText(levelLinesText, 8, 32);
 
   // Caja de NEXT
   ctx.strokeStyle = palette.hudBorder;
@@ -474,6 +482,15 @@ export class TetrisGame implements ArcadeGame {
   private prevScore: number;
   private prevLevel: number;
   private prevLines: number;
+
+  /** Fondo + rejilla ya pintados; `null` = reconstruir en el próximo `draw()`. */
+  private bgCache: HTMLCanvasElement | null = null;
+  /** Textos del HUD del canvas, cacheados por valor (-1 = sin calcular). */
+  private hudScore = -1;
+  private hudLevel = -1;
+  private hudLines = -1;
+  private hudScoreText = "";
+  private hudLevelLinesText = "";
 
   // Estado del DAS táctil: null cuando no hay dirección sostenida.
   private touchDas: {
@@ -519,8 +536,45 @@ export class TetrisGame implements ArcadeGame {
   };
 
   private draw() {
-    drawBoard(this.ctx, this.palette, this.state);
-    drawHUD(this.ctx, this.palette, this.state);
+    if (this.bgCache === null) this.bgCache = this.buildBackground();
+    drawBoard(this.ctx, this.palette, this.state, this.bgCache);
+    this.refreshHudText();
+    drawHUD(
+      this.ctx,
+      this.palette,
+      this.state,
+      this.hudScoreText,
+      this.hudLevelLinesText,
+    );
+  }
+
+  /**
+   * Pinta fondo + rejilla una sola vez en un canvas offscreen a la escala real
+   * del contexto (DPR), para que el blit 1:1 sea idéntico al pintado directo.
+   */
+  private buildBackground(): HTMLCanvasElement {
+    const scale = this.ctx.getTransform().a;
+    const cache = document.createElement("canvas");
+    cache.width = Math.round(W * scale);
+    cache.height = Math.round(H * scale);
+    const c = cache.getContext("2d")!;
+    c.setTransform(scale, 0, 0, scale, 0, 0);
+    drawBackground(c, this.palette);
+    return cache;
+  }
+
+  /** Regenera los textos del HUD solo cuando cambia su valor (sin strings ni Intl por frame). */
+  private refreshHudText() {
+    const { score, level, lines } = this.state;
+    if (score !== this.hudScore) {
+      this.hudScore = score;
+      this.hudScoreText = `SCORE ${score.toLocaleString("es-ES")}`;
+    }
+    if (level !== this.hudLevel || lines !== this.hudLines) {
+      this.hudLevel = level;
+      this.hudLines = lines;
+      this.hudLevelLinesText = `LEVEL ${level}   LINES ${lines}`;
+    }
   }
 
   /** Mismo movimiento que los casos ArrowLeft/ArrowRight/ArrowDown de `handleKeyDown`. */
@@ -639,6 +693,7 @@ export class TetrisGame implements ArcadeGame {
    */
   setSkin(skin: SkinId): void {
     this.palette = TETRIS_PALETTES[skin] ?? TETRIS_PALETTES[DEFAULT_SKIN];
+    this.bgCache = null;
     this.draw();
   }
 
@@ -649,6 +704,7 @@ export class TetrisGame implements ArcadeGame {
     }
     window.removeEventListener("keydown", this.handleKeyDown);
     this.touchDas = null;
+    this.bgCache = null;
   }
 
   /**

@@ -80,6 +80,47 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
 
+/**
+ * Elimina en sitio los elementos con `dead === true`, conservando el orden de
+ * los vivos. Equivale a `arr = arr.filter((x) => !x.dead)` sin crear un array
+ * nuevo por frame.
+ */
+function compactDead<T extends { dead: boolean }>(arr: T[]): void {
+  let j = 0;
+  for (let i = 0; i < arr.length; i++) {
+    const item = arr[i];
+    if (!item.dead) arr[j++] = item;
+  }
+  arr.length = j;
+}
+
+/**
+ * Cadenas `rgba(r, g, b, a)` de las partículas precalculadas por terna `"r, g, b"`
+ * y alpha en centésimas (0.00–1.00): el mismo texto que produciría
+ * `alpha.toFixed(2)`, sin concatenar strings por partícula y por frame.
+ */
+const PARTICLE_COLORS = new Map<string, string[]>();
+
+function particleColor(rgb: string, alpha: number): string {
+  const scaled = alpha * 100;
+  const n = Math.round(scaled);
+  // Casi empate a medio céntimo o fuera de rango: se delega en toFixed para
+  // garantizar exactamente el mismo redondeo que antes.
+  if (n < 0 || n > 100 || Math.abs(scaled - n) > 0.5 - 1e-9)
+    return `rgba(${rgb}, ${alpha.toFixed(2)})`;
+  let table = PARTICLE_COLORS.get(rgb);
+  if (!table) {
+    table = [];
+    for (let i = 0; i <= 100; i++)
+      table.push(`rgba(${rgb}, ${(i / 100).toFixed(2)})`);
+    PARTICLE_COLORS.set(rgb, table);
+  }
+  return table[n];
+}
+
+// Textos del HUD memoizados por valor: solo se reconstruyen al cambiar.
+const HUD_TEXT = { scoreVal: NaN, score: "", levelVal: NaN, level: "" };
+
 // Teclas del juego cuyo comportamiento por defecto del navegador (scroll de la
 // página) debe bloquearse mientras el motor está activo.
 const CONTROL_KEYS = new Set([
@@ -381,7 +422,7 @@ class Particle {
 
   draw(ctx: CanvasRenderingContext2D, palette: AsteroidsPalette) {
     const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(${palette.particle}, ${alpha.toFixed(2)})`;
+    ctx.strokeStyle = particleColor(palette.particle, alpha);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
@@ -467,23 +508,30 @@ function killShip(state: GameState) {
 }
 
 // ── Update ────────────────────────────────────────────────────────────────────
+/** Buffer reutilizable para los fragmentos de asteroide de un frame. */
+const NEW_ASTEROIDS: Asteroid[] = [];
+
 function updateGame(
   state: GameState,
   dt: number,
   keys: KeyState,
   shootPressed: boolean,
 ) {
+  // Bucles indexados y compactación en sitio: mismo orden de actualización y de
+  // pintado que con forEach/filter, sin closures ni arrays nuevos por frame.
+  const { particles, asteroids, bullets, powerUps } = state;
+
   if (state.state === "gameover") {
-    state.particles.forEach((p) => p.update(dt));
-    state.particles = state.particles.filter((p) => !p.dead);
+    for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+    compactDead(particles);
     return;
   }
 
   if (state.state === "dead") {
     state.deadTimer -= dt;
-    state.particles.forEach((p) => p.update(dt));
-    state.particles = state.particles.filter((p) => !p.dead);
-    state.asteroids.forEach((a) => a.update(dt));
+    for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+    compactDead(particles);
+    for (let i = 0; i < asteroids.length; i++) asteroids[i].update(dt);
     if (state.deadTimer <= 0) {
       state.state = "playing";
       state.ship.reset();
@@ -491,56 +539,68 @@ function updateGame(
     return;
   }
 
-  // Disparar
+  // Disparar (solo al pulsar: no es una asignación por frame)
   if (shootPressed) {
-    state.bullets.push(...state.ship.tryShoot());
+    const shots = state.ship.tryShoot();
+    for (let i = 0; i < shots.length; i++) bullets.push(shots[i]);
   }
 
   state.ship.update(dt, keys);
-  state.bullets.forEach((b) => b.update(dt));
-  state.asteroids.forEach((a) => a.update(dt));
-  state.particles.forEach((p) => p.update(dt));
-  state.powerUps.forEach((p) => p.update(dt));
+  for (let i = 0; i < bullets.length; i++) bullets[i].update(dt);
+  for (let i = 0; i < asteroids.length; i++) asteroids[i].update(dt);
+  for (let i = 0; i < particles.length; i++) particles[i].update(dt);
+  for (let i = 0; i < powerUps.length; i++) powerUps[i].update(dt);
 
-  state.bullets = state.bullets.filter((b) => !b.dead);
-  state.particles = state.particles.filter((p) => !p.dead);
-  state.powerUps = state.powerUps.filter((p) => !p.dead);
+  compactDead(bullets);
+  compactDead(particles);
+  compactDead(powerUps);
 
-  for (const p of state.powerUps) {
+  for (let i = 0; i < powerUps.length; i++) {
+    const p = powerUps[i];
     if (!p.dead && dist(state.ship, p) < state.ship.radius + p.radius) {
       p.dead = true;
       state.ship.tripleShot = POWERUP_DURATION;
     }
   }
 
-  // Bala vs asteroide
-  const newAsteroids: Asteroid[] = [];
-  for (const b of state.bullets) {
-    for (const a of state.asteroids) {
+  // Bala vs asteroide. Los fragmentos se añaden al final tras compactar, igual
+  // que el antiguo `filter(...).concat(newAsteroids)`.
+  const newAsteroids = NEW_ASTEROIDS;
+  newAsteroids.length = 0;
+  for (let bi = 0; bi < bullets.length; bi++) {
+    const b = bullets[bi];
+    for (let ai = 0; ai < asteroids.length; ai++) {
+      const a = asteroids[ai];
       if (!a.dead && !b.dead && dist(b, a) < a.radius) {
         b.dead = true;
         a.dead = true;
         state.score += POINTS[a.size];
         explode(state, a.x, a.y, a.size * 5);
-        newAsteroids.push(...a.split());
+        const parts = a.split();
+        for (let k = 0; k < parts.length; k++) newAsteroids.push(parts[k]);
         if (!state.powerUpSpawned) {
           state.killsSinceSpawn++;
           const guaranteed = state.killsSinceSpawn >= 5;
           if (guaranteed || Math.random() < POWERUP_DROP_CHANCE) {
-            state.powerUps.push(new PowerUp(a.x, a.y));
+            powerUps.push(new PowerUp(a.x, a.y));
             state.powerUpSpawned = true;
           }
         }
       }
     }
   }
-  state.asteroids = state.asteroids.filter((a) => !a.dead).concat(newAsteroids);
-  state.bullets = state.bullets.filter((b) => !b.dead);
+  compactDead(asteroids);
+  for (let i = 0; i < newAsteroids.length; i++) asteroids.push(newAsteroids[i]);
+  newAsteroids.length = 0;
+  compactDead(bullets);
 
   // Nave vs asteroide
   if (state.ship.invincible <= 0) {
-    for (const a of state.asteroids) {
-      if (dist(state.ship, a) < state.ship.radius + a.radius * 0.82) {
+    for (let i = 0; i < asteroids.length; i++) {
+      if (
+        dist(state.ship, asteroids[i]) <
+        state.ship.radius + asteroids[i].radius * 0.82
+      ) {
         killShip(state);
         break;
       }
@@ -582,11 +642,20 @@ function drawHUD(
   ctx.fillStyle = palette.hud;
   ctx.font = "15px monospace";
 
+  if (state.score !== HUD_TEXT.scoreVal) {
+    HUD_TEXT.scoreVal = state.score;
+    HUD_TEXT.score = `SCORE  ${state.score}`;
+  }
+  if (state.level !== HUD_TEXT.levelVal) {
+    HUD_TEXT.levelVal = state.level;
+    HUD_TEXT.level = `NIVEL ${state.level}`;
+  }
+
   ctx.textAlign = "left";
-  ctx.fillText(`SCORE  ${state.score}`, 14, 26);
+  ctx.fillText(HUD_TEXT.score, 14, 26);
 
   ctx.textAlign = "center";
-  ctx.fillText(`NIVEL ${state.level}`, W / 2, 26);
+  ctx.fillText(HUD_TEXT.level, W / 2, 26);
 
   for (let i = 0; i < state.lives; i++)
     drawLifeIcon(ctx, palette, W - 16 - i * 22, 18);
@@ -606,10 +675,11 @@ function drawGame(
   ctx.fillStyle = palette.bg;
   ctx.fillRect(0, 0, W, H);
 
-  state.particles.forEach((p) => p.draw(ctx, palette));
-  state.asteroids.forEach((a) => a.draw(ctx, palette));
-  state.powerUps.forEach((p) => p.draw(ctx, palette));
-  state.bullets.forEach((b) => b.draw(ctx, palette));
+  const { particles, asteroids, powerUps, bullets } = state;
+  for (let i = 0; i < particles.length; i++) particles[i].draw(ctx, palette);
+  for (let i = 0; i < asteroids.length; i++) asteroids[i].draw(ctx, palette);
+  for (let i = 0; i < powerUps.length; i++) powerUps[i].draw(ctx, palette);
+  for (let i = 0; i < bullets.length; i++) bullets[i].draw(ctx, palette);
   state.ship.draw(ctx, palette);
 
   drawHUD(state, ctx, palette);

@@ -304,6 +304,24 @@ const DIR_ANGLE: Record<Direction, number> = {
 const isRiverRow = (row: number) =>
   row >= ROW_RIVER_TOP && row <= ROW_RIVER_BOT;
 
+/**
+ * Elipses de la rana [x, y, rx, ry, dirReach]: patas delanteras y traseras por
+ * lado, y cuerpo 28×24. `dirReach` (±1/0) escala la extensión de las patas al saltar.
+ */
+const FROG_PARTS: readonly (readonly [
+  number,
+  number,
+  number,
+  number,
+  number,
+])[] = [
+  [-13, -6, 4, 5, -1],
+  [-13, 8, 5, 6, 1],
+  [13, -6, 4, 5, -1],
+  [13, 8, 5, 6, 1],
+  [0, 0, 14, 12, 0],
+];
+
 export class FroggerGame implements ArcadeGame {
   private ctx: CanvasRenderingContext2D;
   private callbacks: GameCallbacks;
@@ -324,6 +342,11 @@ export class FroggerGame implements ArcadeGame {
   /** Reloj global (ms) que gobierna el ciclo de inmersión de las tortugas. */
   private elapsed = 0;
   private state: "playing" | "gameover" = "playing";
+
+  /** Fondo estático (zonas, ondas, líneas, marcos de metas) ya pintado. */
+  private bgCache: HTMLCanvasElement | null = null;
+  /** Desplazamiento (celdas) de cada carril en el frame actual, por fila. Se reutiliza. */
+  private readonly laneShift = new Float64Array(ROWS);
 
   private rafId: number | null = null;
   private lastTime: number | null = null;
@@ -368,12 +391,12 @@ export class FroggerGame implements ArcadeGame {
 
   private update(dtMs: number) {
     this.elapsed += dtMs;
-    const laneShift = this.moveEntities(dtMs);
+    this.moveEntities(dtMs);
 
     // La rana en el río viaja con lo que la sostiene.
     if (!this.frog.animating && isRiverRow(this.frog.row)) {
       if (this.getSupport()) {
-        this.frog.col += laneShift[this.frog.row] ?? 0;
+        this.frog.col += this.laneShift[this.frog.row];
       }
     }
 
@@ -392,12 +415,11 @@ export class FroggerGame implements ArcadeGame {
     if (this.timeLeft <= 0) this.killFrog();
   }
 
-  /** Avanza cada entidad en su carril; devuelve el desplazamiento (celdas) por fila. */
-  private moveEntities(dtMs: number): Record<number, number> {
-    const shift: Record<number, number> = {};
+  /** Avanza cada entidad en su carril y deja el desplazamiento (celdas) por fila en `laneShift`. */
+  private moveEntities(dtMs: number): void {
     for (const lane of this.lanes) {
       const delta = (lane.speed * lane.dir * (dtMs / 16)) / CELL;
-      shift[lane.row] = delta;
+      this.laneShift[lane.row] = delta;
       for (const e of lane.entities) {
         e.col += delta;
         // Anillo de LOOP_CELLS: al salir por un lado reentra por el opuesto sin
@@ -411,7 +433,6 @@ export class FroggerGame implements ArcadeGame {
         }
       }
     }
-    return shift;
   }
 
   private startJump(dir: Direction) {
@@ -552,8 +573,9 @@ export class FroggerGame implements ArcadeGame {
 
     ctx.save();
     ctx.translate(0, HUD_H);
-    this.drawZones();
-    this.drawGoals();
+    if (this.bgCache === null) this.bgCache = this.buildBackground();
+    ctx.drawImage(this.bgCache, 0, 0, W, ROWS * CELL);
+    this.drawGoalFrogs();
     for (const lane of this.lanes) {
       for (const e of lane.entities) this.drawEntity(lane, e);
     }
@@ -561,8 +583,24 @@ export class FroggerGame implements ArcadeGame {
     ctx.restore();
   }
 
-  private drawZones() {
-    const { ctx } = this;
+  /**
+   * Pinta una vez el fondo estático (zonas, ondas, líneas, marcos de metas) en
+   * un canvas offscreen a la escala real del contexto, para que el blit por
+   * frame sea igual de nítido que dibujarlo directo.
+   */
+  private buildBackground(): HTMLCanvasElement {
+    const scale = this.ctx.getTransform().a;
+    const cache = document.createElement("canvas");
+    cache.width = Math.round(W * scale);
+    cache.height = Math.round(ROWS * CELL * scale);
+    const bg = cache.getContext("2d")!;
+    bg.setTransform(scale, 0, 0, scale, 0, 0);
+    this.drawZones(bg);
+    this.drawGoalFrames(bg);
+    return cache;
+  }
+
+  private drawZones(ctx: CanvasRenderingContext2D) {
     for (let row = 0; row < ROWS; row++) {
       let color = this.palette.safe;
       if (row === ROW_GOALS) color = this.palette.goalBg;
@@ -591,8 +629,7 @@ export class FroggerGame implements ArcadeGame {
     ctx.setLineDash([]);
   }
 
-  private drawGoals() {
-    const { ctx } = this;
+  private drawGoalFrames(ctx: CanvasRenderingContext2D) {
     for (let i = 0; i < GOAL_COUNT; i++) {
       const x = goalCol(i) * CELL;
       ctx.fillStyle = this.palette.goalMouth;
@@ -600,7 +637,15 @@ export class FroggerGame implements ArcadeGame {
       ctx.strokeStyle = this.palette.goalBorder;
       ctx.lineWidth = 3;
       ctx.strokeRect(x + 2, 4, CELL * 2 - 4, CELL - 8);
-      if (this.goals[i]) this.drawFrogShape(x + CELL, CELL / 2, 0, false, 0.9);
+    }
+  }
+
+  /** Las ranas en las bocas cambian durante la partida: no van en el caché. */
+  private drawGoalFrogs() {
+    for (let i = 0; i < GOAL_COUNT; i++) {
+      if (this.goals[i]) {
+        this.drawFrogShape(goalCol(i) * CELL + CELL, CELL / 2, 0, false, 0.9);
+      }
     }
   }
 
@@ -673,8 +718,10 @@ export class FroggerGame implements ArcadeGame {
   private drawWheels(x: number, y: number, w: number) {
     const { ctx } = this;
     ctx.fillStyle = this.palette.wheel;
-    for (const wx of [x + 8, x + w - 8]) {
-      for (const wy of [y + 8, y + CELL - 8]) {
+    for (let i = 0; i < 2; i++) {
+      const wx = i === 0 ? x + 8 : x + w - 8;
+      for (let j = 0; j < 2; j++) {
+        const wy = j === 0 ? y + 8 : y + CELL - 8;
         ctx.beginPath();
         ctx.arc(wx, wy, 4, 0, Math.PI * 2);
         ctx.fill();
@@ -710,27 +757,23 @@ export class FroggerGame implements ArcadeGame {
     ctx.rotate(angle);
     ctx.scale(scale, scale);
     const reach = jumping ? 8 : 0;
-    // Patas delanteras, traseras y cuerpo 28×24, como elipses [x, y, rx, ry].
-    const parts: [number, number, number, number][] = [];
-    for (const sx of [-1, 1]) {
-      parts.push([sx * 13, -6 - reach, 4, 5], [sx * 13, 8 + reach, 5, 6]);
-    }
-    parts.push([0, 0, 14, 12]);
     const { frogOutline } = this.palette;
     if (frogOutline) {
       // Contorno bajo el relleno: separa la rana de troncos y tortugas claros.
       ctx.strokeStyle = frogOutline;
       ctx.lineWidth = 3;
-      for (const [x, y, rx, ry] of parts) {
+      for (let i = 0; i < FROG_PARTS.length; i++) {
+        const p = FROG_PARTS[i];
         ctx.beginPath();
-        ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+        ctx.ellipse(p[0], p[1] + p[4] * reach, p[2], p[3], 0, 0, Math.PI * 2);
         ctx.stroke();
       }
     }
     ctx.fillStyle = this.palette.frog;
-    for (const [x, y, rx, ry] of parts) {
+    for (let i = 0; i < FROG_PARTS.length; i++) {
+      const p = FROG_PARTS[i];
       ctx.beginPath();
-      ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+      ctx.ellipse(p[0], p[1] + p[4] * reach, p[2], p[3], 0, 0, Math.PI * 2);
       ctx.fill();
     }
     for (const sx of [-1, 1]) {
@@ -839,6 +882,7 @@ export class FroggerGame implements ArcadeGame {
    */
   setSkin(skin: SkinId): void {
     this.palette = FROGGER_PALETTES[skin] ?? FROGGER_PALETTES[DEFAULT_SKIN];
+    this.bgCache = null;
     if (this.rafId === null) this.draw();
   }
 

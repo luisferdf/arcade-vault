@@ -23,14 +23,11 @@ export function TouchControls({ onInput, unusedActions }: TouchControlsProps) {
   // Red de seguridad: si el navegador se pierde un touchend/touchcancel (dedo
   // sale del viewport, notificación del sistema), no debe quedar un botón
   // "trabado" en pressed:true al perder el foco de la ventana.
-  const releaseAllRef = useRef<() => void>(() => {});
   const releasers = useRef(new Set<() => void>());
-  releaseAllRef.current = () => {
-    releasers.current.forEach((release) => release());
-  };
 
   useEffect(() => {
-    const releaseAll = () => releaseAllRef.current();
+    const active = releasers.current;
+    const releaseAll = () => active.forEach((release) => release());
     window.addEventListener("blur", releaseAll);
     document.addEventListener("visibilitychange", releaseAll);
     return () => {

@@ -4,6 +4,7 @@ import { AsteroidsGame, W as ASTEROIDS_W, H as ASTEROIDS_H } from "./asteroids";
 import { TetrisGame, W as TETRIS_W, H as TETRIS_H } from "./tetris";
 import { ArkanoidGame, W as ARKANOID_W, H as ARKANOID_H } from "./arkanoid";
 import { SnakeGame, W as SNAKE_W, H as SNAKE_H } from "./snake";
+import { FroggerGame, W as FROGGER_W, H as FROGGER_H } from "./frogger";
 
 /**
  * Juegos con motor real, indexados por el `id` de la tabla `games` de Supabase.
@@ -45,6 +46,14 @@ export const GAME_ENGINES: Record<string, GameEngineEntry> = {
     skins: SKIN_IDS,
     unusedTouchActions: ["a", "b"],
     create: (ctx, callbacks, skin) => new SnakeGame(ctx, callbacks, skin),
+  },
+  frogger: {
+    width: FROGGER_W,
+    height: FROGGER_H,
+    usesLives: true,
+    skins: SKIN_IDS,
+    unusedTouchActions: ["a", "b"],
+    create: (ctx, callbacks, skin) => new FroggerGame(ctx, callbacks, skin),
   },
 };
 

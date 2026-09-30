@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Material de referencia (mockups JSX, juegos vanilla, basura de macOS):
+    // no forma parte de la app y no se ejecuta.
+    "references/**",
   ]),
 ]);
 

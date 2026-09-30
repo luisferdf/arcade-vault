@@ -5,7 +5,7 @@ export interface Game {
   long: string;
   cat: "ARCADE" | "PUZZLE" | "SHOOTER" | "VERSUS";
   cover: string;
-  color: "cyan" | "magenta" | "yellow" | "green";
+  color: "cyan" | "magenta" | "yellow" | "green" | "lime";
   best: number;
   plays: string;
   available: boolean;

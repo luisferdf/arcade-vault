@@ -1240,8 +1240,80 @@ body.av-fullscreen-game .crt-bottom {
   margin-bottom: 10px;
 }
 .player-hud.touch-hud .hud-actions .btn {
-  padding: 8px 12px;
-  min-width: 40px;
+  padding: 8px 10px;
+  min-width: 36px;
+}
+/* Chips de skin + PAUSA/FIN/SALIR en una sola línea: con el padding de
+   desktop no caben en ~340 px y SALIR saltaba a una tercera línea, robando
+   ~40 px de alto al canvas en todos los motores. Genérico, no por juego. */
+.player-hud.touch-hud .hud-actions,
+.player-hud.touch-hud .skin-chips {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.player-hud.touch-hud .skin-chips .chip {
+  padding: 8px 5px;
+  letter-spacing: 0.04em;
+}
+
+/* Teléfono en horizontal (pantalla corta + dedo): en vertical el D-pad, el nav
+   y el HUD se apilan y se comían todo el alto, dejando el canvas en ~16 px.
+   Aquí se recoloca en tres columnas -- D-pad | pantalla | A/B -- con el HUD
+   arriba a todo lo ancho y sin nav (SALIR sigue en el HUD). Genérico para
+   todos los motores; `.touch-controls` pasa a `display: contents` para que
+   D-pad y botones A/B sean celdas directas del grid de `.av-player`. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  body.av-fullscreen-game .av-nav {
+    display: none;
+  }
+  body.av-fullscreen-game .av-player {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 12px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 6px max(12px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  body.av-fullscreen-game .player-hud {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    margin-bottom: 6px;
+    padding: 6px 12px;
+  }
+  body.av-fullscreen-game .crt {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-rows: 1fr;
+    padding: 6px;
+  }
+  body.av-fullscreen-game .crt-bottom {
+    display: none;
+  }
+  body.av-fullscreen-game .touch-controls {
+    display: contents;
+  }
+  body.av-fullscreen-game .touch-controls::before {
+    display: none;
+  }
+  /* `display: contents` deja al contenedor sin caja: su `touch-action` y
+     `user-select` ya no se aplican, así que se repiten en cada grupo. */
+  body.av-fullscreen-game .touch-dpad {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: center;
+    touch-action: none;
+    user-select: none;
+  }
+  body.av-fullscreen-game .touch-buttons {
+    grid-column: 3;
+    grid-row: 2;
+    align-self: center;
+    touch-action: none;
+    user-select: none;
+  }
 }
 
 .player-hud {
@@ -1810,6 +1882,19 @@ body.av-fullscreen-game .crt-bottom {
   justify-content: center;
   margin-top: 18px;
   flex-wrap: wrap;
+}
+/* En teléfonos el botón GUARDAR PUNTUACIÓN no cabe junto al input y se
+   salía del modal por la derecha: se apila bajo el input. */
+@media (max-width: 480px) {
+  .modal {
+    padding: 28px 18px;
+  }
+  .modal .input-row {
+    flex-direction: column;
+  }
+  .modal .input-row input {
+    flex: 0 0 auto;
+  }
 }
 .toast-saved {
   font-family: var(--pixel);

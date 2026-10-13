@@ -1,6 +1,6 @@
 # SPEC 13 — Autenticación con Supabase (registro, login, recuperación y perfiles)
 
-> **Estado:** implementadogit siw
+> **Estado:** implementado
 > **Depende de:** 01-mvp-visual (pantalla `/auth` mock), 04-supabase-setup (clientes Supabase y `proxy.ts`), 06-leaderboard-catalogo-supabase (tabla `scores`)
 > **Fecha:** 2026-10-02
 > **Objetivo:** Reemplazar el login falso de `localStorage` por autenticación real con Supabase (email+contraseña con confirmación, Google y GitHub, recuperación de contraseña, cierre de sesión y nombre de jugador único en `profiles`) y vincular los scores al usuario autenticado.

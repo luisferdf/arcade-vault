@@ -1,6 +1,6 @@
 # SPEC 11 — Apariencia de gamepad físico para controles táctiles
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 10-controles-tactiles (componente `TouchControls`, contrato `handleTouchInput`, registro `GAME_ENGINES`)
 > **Fecha:** 2026-09-29
 > **Objetivo:** Rediseñar visualmente `TouchControls` como un gamepad físico (panel 3D, D-pad con hub central, botones A/B circulares con glow, A=magenta/B=cian) siguiendo el mockup de `references/gamepad-assets/`, atenuando y bloqueando al toque los botones que el juego activo no usa.

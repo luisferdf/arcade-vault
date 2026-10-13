@@ -2,14 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import {
-  getUserServerSnapshot,
-  getUserSnapshot,
-  parseStoredUser,
-  setStoredUser,
-  subscribeUser,
-} from "@/lib/auth";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useAuth } from "./AuthProvider";
 import {
   getThemeServerSnapshot,
   getThemeSnapshot,
@@ -20,14 +14,7 @@ import {
 export function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  // La sesión falsa vive en localStorage (fuera de React): store externo, igual
-  // que el tema. En SSR no hay sesión; tras hidratar se lee el valor real.
-  const rawUser = useSyncExternalStore(
-    subscribeUser,
-    getUserSnapshot,
-    getUserServerSnapshot,
-  );
-  const user = useMemo(() => parseStoredUser(rawUser), [rawUser]);
+  const { user, loading, signOut } = useAuth();
   // El tema vive en localStorage (fuera de React): se lee como store externo para
   // no desincronizar con el `data-theme` que fija el script anti-FOUC.
   const theme = useSyncExternalStore(
@@ -53,9 +40,9 @@ export function Nav() {
 
   const close = () => setOpen(false);
 
-  const handleSignOut = () => {
-    setStoredUser(null);
+  const handleSignOut = async () => {
     close();
+    await signOut();
   };
 
   return (
@@ -96,12 +83,27 @@ export function Nav() {
         >
           {theme === "dark" ? "☀" : "☾"}
         </button>
-        {user ? (
-          <button className="btn ghost auth-btn" onClick={handleSignOut}>
-            {user.name} ▾
-          </button>
+        {loading ? null : user ? (
+          <>
+            {user.username ? (
+              <span className="pixel neon-cyan" style={{ fontSize: 10 }}>
+                {user.username}
+              </span>
+            ) : (
+              <Link href="/auth/nombre" className="btn auth-btn">
+                ELIGE TU NOMBRE
+              </Link>
+            )}
+            <button className="btn ghost auth-btn" onClick={handleSignOut}>
+              SALIR
+            </button>
+          </>
         ) : (
-          <Link href="/auth" className="btn auth-btn">
+          <Link
+            href="/auth"
+            className="btn auth-btn"
+            onClick={() => window.dispatchEvent(new Event("av:auth-reset"))}
+          >
             Iniciar Sesión
           </Link>
         )}
@@ -141,12 +143,26 @@ export function Nav() {
         <Link href="/about" className={isAbout ? "active" : ""} onClick={close}>
           Acerca de
         </Link>
-        {user ? (
-          <a className={isAuth ? "active" : ""} onClick={handleSignOut}>
-            Cerrar sesión
-          </a>
+        {loading ? null : user ? (
+          <>
+            {!user.username && (
+              <Link href="/auth/nombre" onClick={close}>
+                ELIGE TU NOMBRE
+              </Link>
+            )}
+            <a onClick={handleSignOut}>
+              Cerrar sesión{user.username ? ` · ${user.username}` : ""}
+            </a>
+          </>
         ) : (
-          <Link href="/auth" className={isAuth ? "active" : ""} onClick={close}>
+          <Link
+            href="/auth"
+            className={isAuth ? "active" : ""}
+            onClick={() => {
+              window.dispatchEvent(new Event("av:auth-reset"));
+              close();
+            }}
+          >
             Iniciar Sesión
           </Link>
         )}

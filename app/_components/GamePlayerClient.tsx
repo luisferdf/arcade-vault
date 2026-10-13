@@ -9,12 +9,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import type { Game } from "@/lib/games";
-import {
-  getUserServerSnapshot,
-  getUserSnapshot,
-  parseStoredUser,
-  subscribeUser,
-} from "@/lib/auth";
+import { useAuth } from "./AuthProvider";
 import { saveScore } from "@/lib/scores";
 import type { ArcadeGame } from "@/lib/games/engine";
 import { getEngine } from "@/lib/games/registry";
@@ -48,13 +43,10 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
   const [over, setOver] = useState(false);
   // Nombre escrito a mano en el modal; mientras sea null se usa el de la sesión.
   const [typedName, setName] = useState<string | null>(null);
-  const rawUser = useSyncExternalStore(
-    subscribeUser,
-    getUserSnapshot,
-    getUserServerSnapshot,
-  );
-  const name = typedName ?? parseStoredUser(rawUser)?.name ?? "INVITADO";
+  const { user } = useAuth();
+  const name = typedName ?? user?.username ?? "INVITADO";
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   // Cambia en cada partida nueva: fuerza a recrear la instancia del motor.
   const [runId, setRunId] = useState(0);
   // Skin del canvas. Solo la declara el motor en registry.ts (`skins`); si no la
@@ -202,12 +194,24 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
     setPaused(false);
     setOver(false);
     setSaved(false);
+    setSaveError(null);
     // Destruye la instancia actual y monta una nueva (ver efecto con [engine, runId]).
     setRunId((r) => r + 1);
   };
   const handleSaveScore = async () => {
-    await saveScore({ gameId: game.id, name, score });
-    setSaved(true);
+    setSaveError(null);
+    const result = await saveScore({ gameId: game.id, name, score });
+    if (result.ok) {
+      setSaved(true);
+      return;
+    }
+    setSaveError(
+      result.error === "name_reserved"
+        ? "ESE NOMBRE ESTÁ RESERVADO"
+        : result.error === "profile_required"
+          ? "ELIGE TU NOMBRE DE JUGADOR PRIMERO"
+          : "NO SE PUDO GUARDAR. INTÉNTALO DE NUEVO",
+    );
   };
 
   return (
@@ -357,9 +361,11 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
               <div className="input-row">
                 <input
                   value={name}
-                  onChange={(e) =>
-                    setName(e.target.value.toUpperCase().slice(0, 10))
-                  }
+                  onChange={(e) => {
+                    setName(e.target.value.toUpperCase().slice(0, 10));
+                    setSaveError(null);
+                  }}
+                  readOnly={!!user?.username}
                   placeholder="TUS INICIALES"
                 />
                 <button className="btn yellow" onClick={handleSaveScore}>
@@ -368,6 +374,15 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
               </div>
             ) : (
               <div className="toast-saved">▸ PUNTUACIÓN GUARDADA_</div>
+            )}
+            {saveError && (
+              <div
+                className="contact-error"
+                role="alert"
+                style={{ marginTop: 12 }}
+              >
+                {saveError}
+              </div>
             )}
             <div className="actions">
               <button className="btn" onClick={restart}>

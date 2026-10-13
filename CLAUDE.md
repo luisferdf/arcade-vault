@@ -20,7 +20,8 @@ Development follows **Spec Driven Design** using the `/spec` and `/spec-impl` wo
 
 - Every feature starts as a spec in `specs/NN-<slug>.md` with an `**Estado:**` header (`Borrador` → `Aprobado` → `implementado`). The human, not the agent, promotes `Borrador` → `Aprobado`.
 - `/spec-impl NN-<slug>` implements it on a branch `spec-NN-<slug>` (auto-created; see `specs/.spec-config.yml`), merged back via PR.
-- Specs 01–09 are all implemented: MVP visual, home landing, about + contact email, Supabase setup, the Supabase catalog/leaderboard migration, and the games Asteroides, Tetris, Arkanoid and Snake.
+- Specs 01–12 are implemented: MVP visual, home landing, about + contact email, Supabase setup, catalog/leaderboard migration, games Asteroides, Tetris, Arkanoid and Snake, touch controls (10), Frogger performance (12). Spec 11 (physical-gamepad look for `TouchControls`) is also implemented.
+- Frogger's spec lives outside the numbered list: `specs/Game-jam/Frogger/01-frogger-core.md` (`implementado`). `specs/Game-jam/<id>/` is where the `game-jam` agent drops alternative specs; pick one, move it to `specs/NN-juego-<slug>.md`, then `Aprobado` → `/spec-impl`.
 
 No test runner is configured yet; verification is manual per each spec's "pruebas manuales" plus `npm run build`.
 
@@ -46,29 +47,38 @@ npm run lint     # eslint
 
 ### Routes (`app/`)
 
-| Route               | What it is                                                      |
-| ------------------- | --------------------------------------------------------------- |
-| `/`                 | Landing (`HomeClient`)                                          |
-| `/home`             | Redirect to `/`                                                 |
-| `/biblioteca`       | Game catalog with search + category filter (`BibliotecaClient`) |
-| `/juego/[id]`       | Game detail + per-game top 10                                   |
-| `/juego/[id]/jugar` | The Player (`GamePlayerClient`)                                 |
-| `/salon`            | Salón de la Fama — global leaderboard, filterable by game       |
-| `/about`            | About + contact form                                            |
-| `/auth`             | Fake login: stores a name in `localStorage` (`lib/auth.ts`)     |
-| `/api/contact`      | POST → sends the contact email via Resend                       |
+| Route                    | What it is                                                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                      | Landing (`HomeClient`)                                                                                                                                           |
+| `/home`                  | Redirect to `/`                                                                                                                                                  |
+| `/biblioteca`            | Game catalog with search + category filter (`BibliotecaClient`)                                                                                                  |
+| `/juego/[id]`            | Game detail + per-game top 10                                                                                                                                    |
+| `/juego/[id]/jugar`      | The Player (`GamePlayerClient`)                                                                                                                                  |
+| `/salon`                 | Salón de la Fama — global leaderboard, filterable by game                                                                                                        |
+| `/about`                 | About + contact form                                                                                                                                             |
+| `/auth`                  | Login / sign-up (email+password, Google, GitHub) or guest                                                                                                        |
+| `/auth/callback`         | Route handler: PKCE `code` → session (email confirm, OAuth, recovery); redirects to `/auth/nombre` if the session has no profile; `next` must be a relative path |
+| `/auth/recuperar`        | Asks for the email to send a password-reset link                                                                                                                 |
+| `/auth/nueva-contrasena` | Sets the new password (needs recovery session, else → `/auth`)                                                                                                   |
+| `/auth/nombre`           | Pick the player name (first OAuth login, no profile yet)                                                                                                         |
+| `/api/contact`           | POST → sends the contact email via Resend                                                                                                                        |
 
 Convention: server component pages fetch data (`lib/games.ts`) and pass it to a `*Client` component in `app/_components/`. Interactive state lives in the client component only.
 
 ### Data (Supabase)
 
-Two tables; there is no hardcoded catalog.
+Three tables; there is no hardcoded catalog.
 
-- `games` — `id` (slug, PK, also the URL segment), `title`, `short`, `long`, `cat` (`ARCADE|PUZZLE|SHOOTER|VERSUS`), `cover` (a CSS class name, not an image), `color` (`cyan|magenta|yellow|green`), `available`.
-- `scores` — `game_id` (FK), `user_id` (always `null` today), `name`, `score`, `created_at`.
+- `games` — `id` (slug, PK, also the URL segment), `title`, `short`, `long`, `cat` (`ARCADE|PUZZLE|SHOOTER|VERSUS`), `cover` (a CSS class name, not an image), `color` (`cyan|magenta|yellow|green|lime`), `available`.
+- `scores` — `game_id` (FK), `user_id` (null for guests), `name`, `score`, `created_at`. Trigger `scores_apply_identity` (before insert) overrides identity: with a session it sets `user_id` and `name` from `profiles` (raises `profile_required` if none); as guest it forces `user_id = null` and raises `name_reserved` if `name` is a registered username. The client never decides its identity.
+- `profiles` — `id` (FK `auth.users`), `username` (unique, `^[A-Z0-9_]{3,10}$`, uppercase), `created_at`. Public select; insert only own row. Created by trigger `on_auth_user_created` (email sign-up, name via `options.data.username`) or by `/auth/nombre` (OAuth). `username_available(p_username)` RPC checks availability.
+
+### Auth
+
+Supabase Auth (email+password with email confirmation, Google, GitHub; password recovery; sign out). `app/_components/AuthProvider.tsx` is the client context (`useAuth()` → `{ user, loading, signOut }`, built on `supabase.auth` + `profiles`), mounted in `app/layout.tsx`; consumed by `Nav` and `GamePlayerClient`. `user.username === null` = session without profile. `lib/auth.ts` holds only types and pure helpers (`validateUsername`, `safeNext`, `authErrorMessage` — maps by `error.code`). `proxy.ts` only refreshes the session; no route is protected. Guests (`JUGAR COMO INVITADO`) can still play and save scores.
 
 - `lib/games.ts` (server, via `lib/supabase/server.ts`): `getGames`, `getGameById`, `getTopScoresByGame`, `getGlobalTopScores`. Derived stats (`best`, `plays`) are computed from `scores`, not stored.
-- `lib/scores.ts` (browser, via `lib/supabase/client.ts`): `saveScore()`.
+- `lib/scores.ts` (browser, via `lib/supabase/client.ts`): `saveScore()` (returns `{ ok, error?: "name_reserved" | "profile_required" | "unknown" }`).
 - `lib/games-types.ts`: shared `Game` / `ScoreEntry` types and `CATS`.
 - Schema changes go through the Supabase MCP server (`.mcp.json`, project `zxzqcdscjgwkponoqpiv`) with `apply_migration` / `execute_sql`.
 
@@ -76,17 +86,18 @@ Two tables; there is no hardcoded catalog.
 
 The Player is generic: it knows nothing about individual games.
 
-- `engine.ts` — the contract. `ArcadeGame` (`start` / `pause` / `resume` / `destroy`) and `GameEngineEntry` (logical `width`/`height`, `create(ctx, callbacks)`, optional `extraStats`, `usesLives`). Engines are **pure TypeScript**: no React, no DOM beyond the `CanvasRenderingContext2D` passed in. Engine state is the source of truth; the HUD is a view fed by callbacks (`onScoreChange`, `onLivesChange`, `onLevelChange`, `onGameOver`, `onStatChange`).
+- `engine.ts` — the contract. `ArcadeGame` (`start` / `pause` / `resume` / `destroy`, optional `setSkin(skin)` and `handleTouchInput(action, pressed)`) and `GameEngineEntry` (logical `width`/`height`, `create(ctx, callbacks, skin)`, optional `extraStats`, `usesLives`, `skins`, `unusedTouchActions`). `TouchAction` = `up|down|left|right|a|b`; `unusedTouchActions` dims/blocks those buttons in `TouchControls`. Engines are **pure TypeScript**: no React, no DOM beyond the `CanvasRenderingContext2D` passed in. Engine state is the source of truth; the HUD is a view fed by callbacks (`onScoreChange`, `onLivesChange`, `onLevelChange`, `onGameOver`, `onStatChange`).
 - `registry.ts` — `GAME_ENGINES: Record<gameId, GameEngineEntry>`. **Adding a game = one entry here**; do not add `if (id === …)` branches to `GamePlayerClient.tsx`. Games absent from the registry fall back to the simulated `game-arena`.
-- Implemented engines: `asteroids.ts`, `tetris.ts`, `arkanoid.ts` (+ `arkanoid-levels.ts`), `snake.ts` (+ `snake-atlas.ts`).
+- `skins.ts` — `SkinId`, `SKIN_IDS`, `SKIN_LABELS`, persistence (`av_skin` + `av:skin-changed`). `touch.ts` — touch-device detection for `TouchControls` (`app/_components/TouchControls.tsx`, gamepad look).
+- Implemented engines: `asteroids.ts`, `tetris.ts`, `arkanoid.ts` (+ `arkanoid-levels.ts`), `snake.ts` (+ `snake-atlas.ts`), `frogger.ts`.
 - Hard rules for a new engine: keyboard listeners registered on construction/`start()` and **removed in `destroy()`**; `resume()` discards the accumulated `dt` so physics don't jump; game-over overlays are React's job (the modal), not the canvas.
 - Binary assets go to `public/games/<id>/` and load asynchronously (e.g. `public/games/snake/fruits.png`).
 
 ### Styling
 
-`app/globals.css` (~3k lines) holds the whole design system: theme tokens in `@theme` / `:root`, the CRT/neon chrome (`.av-bg`, `.crt-screen`, `.flicker`, `.pixel`), and **game covers as pure CSS classes** (`cover-bricks`, `cover-tetro`, `cover-snake`, …) — the project uses no cover images. Neon palette: `--cyan #00f5ff`, `--magenta #ff006e`, `--yellow #f5ff00`, `--green #00ff88`, background `#0a0a0f`. Engines hardcode these same values (being phased out per-engine into skin palettes by `skin-designer`).
+`app/globals.css` (~3k lines) holds the whole design system: theme tokens in `@theme` / `:root`, the CRT/neon chrome (`.av-bg`, `.crt-screen`, `.flicker`, `.pixel`), and **game covers as pure CSS classes** (`cover-bricks`, `cover-tetro`, `cover-snake`, …) — the project uses no cover images. Neon palette: `--cyan #00f5ff`, `--magenta #ff006e`, `--yellow #f5ff00`, `--green #00ff88`, background `#0a0a0f`. All 5 engines already use skin palettes (status in `references/game-with-theme.md`); still pending: the `cover-*` classes use literal hex, not theme tokens.
 
-Two independent axes, don't conflate them: the **site theme** (dark/light, `[data-theme]` on `<html>`) recolors the chrome only; a **game skin** (`clasico`/`neon`/`retro`, per `lib/games/skins.ts`) recolors only that game's canvas.
+Two independent axes, don't conflate them: the **site theme** (dark/light, `[data-theme]` on `<html>`, `lib/theme.ts`, `av_theme`) recolors the chrome only; a **game skin** (`clasico`/`neon`/`retro`, per `lib/games/skins.ts`) recolors only that game's canvas.
 
 ### Reference material
 
@@ -96,6 +107,7 @@ Two independent axes, don't conflate them: the **site theme** (dark/light, `[dat
 - `references/game-suggestion-todo.md` — running backlog of game ideas, maintained by the `game-planner` subagent.
 - `references/game-with-theme.md` — per-game skin status (`clasico`/`neon`/`retro`, contrast pass, notes), maintained by the `skin-designer` subagent.
 - `references/game-mobile.md` — per-game mobile-port status (`handleTouchInput`, layout, desktop regression), maintained by the `mobile-porter` subagent.
+- `references/gamepad-assets/` — gamepad mockup for spec 11 (`README.md` is actually the reference HTML/CSS, `gamepad-neon.png` the image). `references/source-assets/` — raw source art (snake).
 - `references/game-performance.md` — per-game performance status (fps base/final, checklist C1–C8), maintained by the `game-performance-booster` subagent.
 
 ## Skills
@@ -107,14 +119,19 @@ Two independent axes, don't conflate them: the **site theme** (dark/light, `[dat
 
 ## Subagents
 
-- **`game-planner`** (`.claude/agents/game-planner.md`) — decides _what_ game should be added next, one step upstream of `/add-game`. Diagnoses gaps in the catalog (`references/implemented-games.md`), researches candidates (can use WebSearch/WebFetch), and proposes 1 main recommendation + 2 alternatives with fit/cost/risk reasoning. Keeps its own memory of every idea it has ever suggested/accepted/rejected in `.claude/agents/game-planner/memory/<slug>.md`, and rewrites `references/game-suggestion-todo.md` from that memory on every run so it never re-suggests something already decided. **Never writes specs or code** — the flow is `game-planner` → `/add-game <slug>` → `/spec-impl`.
-- **`game-jam`** (`.claude/agents/game-jam.md`) — given an example of the game to build (a local code folder, a URL, or rules pasted in the prompt), ports it into 2-3 complete, alternative specs (same depth as specs 07-09) straight to `specs/Game-jam/<game-id>/`, all `Borrador`, with no interview. It never picks or invents the game — the example fixes it; gaps the example leaves open are filled with the minimal rule derived from that same example, always logged as an assumption. Reads `game-planner`'s memory to avoid repeats but never writes to it. Unlike `game-planner` (picks _what_ game is next for the backlog) or `/add-game` (interviews for _one_ spec), `game-jam` turns _one example_ into several ready-to-compare, equally faithful variants. Flow: `game-jam <example>` → pick a variant → move/rename it to `specs/NN-juego-<slug>.md` → `Aprobado` → `/spec-impl`.
-- **`skin-designer`** (`.claude/agents/skin-designer.md`) — implements the skin system **one game at a time**, only the game the user explicitly names (never the whole catalog in one pass). For that game it guarantees at least `clasico` (default), `neon` (must exactly replicate today's hardcoded palette — zero regression) and `retro` skins, each checked for WCAG contrast in both the site's dark and light theme. On its first run (bootstrap mode) it also builds the shared infrastructure: `lib/games/skins.ts`, the skin contract in `engine.ts`, the selector in `GamePlayerClient.tsx`, and the site's light theme. It tracks which game has which skins in `references/game-with-theme.md`, updating it only when it closes out a run. Invoked with no game named, it asks and writes nothing. **Unlike every other subagent in this project, it writes code.** Never touches Supabase or the schema, never modifies an engine other than the one it was given.
-- **`mobile-porter`** (`.claude/agents/mobile-porter.md`) — ports one game's engine at a time to mobile browsers (a phone's Chrome/Safari — no PWA/manifest, no native wrapper), per the touch contract in `specs/10-controles-tactiles.md`. Implements `handleTouchInput` for that engine, fixes touch-layout regressions (canvas clipped, HUD wrapping) the audit finds, and verifies with Playwright (mobile emulation + a desktop-regression pass) that keyboard/mouse still work unchanged. Tracks per-game status in `references/game-mobile.md`. Invoked with no game named, it asks and writes nothing. Typical flow: `/spec-impl` on a new game → `skin-designer <id>` → `mobile-porter <id>` → PR, or all three in one shot via `/spec-impl-game <NN-juego-slug>`. **Also writes code**, like `skin-designer`; never touches Supabase or another engine.
-- **`game-performance-booster`** (`.claude/agents/game-performance-booster.md`) — audits and optimizes one game's engine at a time (the id it receives), using `specs/12-rendimiento-frogger.md` as the reference for what to look for: static background redrawn every frame (offscreen cache), per-frame allocations, HUD callbacks firing without a value change, React re-renders per frame, loop discipline. Measures first (prod build, Playwright fps snippet), applies only zero-visual-change optimizations verified by a deterministic pixel-diff in the 3 skins, and never groups canvas paths without explicit user approval (changes antialiasing). Tracks per-game status in `references/game-performance.md`. Invoked with no game named, it asks and writes nothing. **Also writes code**; never touches Supabase or another engine.
+One game at a time for the code-writing agents. Full behavior, rules and tracking files live in each definition (`.claude/agents/<name>.md`).
+
+- **`game-planner`** — decides _what_ game to add next (catalog gaps, researched candidates, 1 pick + 2 alternatives); keeps its own memory and `references/game-suggestion-todo.md`. Never writes specs/code.
+- **`game-jam`** — turns one example (folder, URL, pasted rules) into 2-3 alternative `Borrador` specs in `specs/Game-jam/<game-id>/`. No interview, never writes code.
+- **`skin-designer`** — gives one game the `clasico`/`neon`/`retro` skins (WCAG-checked in dark + light); status in `references/game-with-theme.md`. Writes code.
+- **`mobile-porter`** — ports one game to mobile browsers (`handleTouchInput`, touch layout, Playwright desktop-regression pass); status in `references/game-mobile.md`. Writes code.
+- **`game-performance-booster`** — audits/optimizes one engine with zero visual change (ref: `specs/12-rendimiento-frogger.md`); status in `references/game-performance.md`. Writes code.
+
+Flows: `game-planner` → `/add-game <slug>` (or `game-jam <example>` → move chosen variant to `specs/NN-juego-<slug>.md`) → `Aprobado` → `/spec-impl-game` (= `/spec-impl` → `skin-designer` → `mobile-porter`, in series) → optionally `game-performance-booster <id>`. The five agents never touch Supabase; `skin-designer`, `mobile-porter` and `game-performance-booster` never modify an engine other than the one named.
 
 ## Conventions
 
 - `.claude/settings.json` runs a PostToolUse hook: every Write/Edit is auto-formatted with Prettier and `eslint --fix`. Don't hand-format.
+- `.claude/worktrees/` holds agent worktrees; it's gitignored, never commit it.
 - Playwright screenshots always go in `.playwright-screenshots/`, never the project root.
 - Secrets live in `.env.local` (`RESEND_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`); keep `.env.example` in sync.

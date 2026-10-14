@@ -6,9 +6,10 @@
 - [ ] Max signup rate — limitar signups por IP (anti-bot) — 10 por 5 min — SIN VERIFICAR (2026-10-14)
 - [x] Headers de seguridad en Next.js (+ HSTS y Permissions-Policy) — verificación estática `next.config.ts` (runtime no ejecutado)
 - [x] Rutas de cuenta protegidas en `proxy.ts` (`/auth/nueva-contrasena`, `/auth/nombre`, `/auth` con sesión)
-- [ ] Dependencias de producción sin vulnerabilidades críticas/altas — `next@16.2.12` CRÍTICA (SEC-006/007)
-- [ ] `/api/contact` valida tipos y longitudes (SEC-009)
-- [ ] Grants de tabla mínimos para `anon`/`authenticated` (SEC-010)
+- [x] Dependencias de producción sin vulnerabilidades críticas/altas — `next@16.4.0`, `npm audit --omit=dev` = 0 (SEC-006/007, 2026-10-14; devDeps con 5 high abiertas, SEC-008)
+- [x] `/api/contact` valida tipos y longitudes (SEC-009, 2026-10-14)
+- [x] Grants de tabla mínimos para `anon`/`authenticated` (SEC-010, migración `revoke_excess_table_grants`, 2026-10-14; verificado por `security-auditor`)
+- [ ] Default privileges de `public` sin grants amplios para `anon`/`authenticated` en tablas/funciones futuras (SEC-024, abierto 2026-10-14)
 - [x] Sin secretos en el repo ni en el historial; `.env*` ignorado; solo publishable key en clientes
 
 Ej:

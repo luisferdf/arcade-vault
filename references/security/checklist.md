@@ -1,29 +1,27 @@
 ## Checklist de seguridad básico
 
-  - [ ] RLS: Row Level Security habilitado en ambas tablas: `games` y `scores`
-  - [ ] Minimum password length — mínimo 8 caracteres
-  - [ ] Leaked password protection — (el warning 4)
-  - [ ] Max signup rate — limitar signups por IP (anti-bot)
-  - [ ] Headers de seguridad en Next.js
-  
-  Ej:
+- [x] RLS: Row Level Security habilitado en ambas tablas: `games` y `scores` (también `profiles`)
+- [x] Minimum password length — mínimo 8 caracteres (+ minúscula, mayúscula, dígito y símbolo)
+- [ ] Leaked password protection — (el warning 4) — pendiente: requiere plan Pro de Supabase
+- [x] Max signup rate — limitar signups por IP (anti-bot) — 10 por 5 min
+- [x] Headers de seguridad en Next.js (+ HSTS y Permissions-Policy)
+
+Ej:
 
 ```ts
 const securityHeaders = [
-  { key: 'X-Content-Type-Options', value: 'nosniff' },
-  { key: 'X-Frame-Options', value: 'DENY' },
-  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 ];
 
 // En la config de Next.js:
-headers: async () => [
-  { source: '/(.*)', headers: securityHeaders }
-]
+headers: async () => [{ source: "/(.*)", headers: securityHeaders }];
 ```
 
 ## Por el lado e Supabase:
 
-- [ ] TODO: vayan al panel de warnings y errores de Supabase
+- [x] Panel de warnings de Supabase revisado (2026-10-14): resueltos `rls_policy_always_true` y `rls_auto_enable`; aceptado `username_available`; pendiente `auth_leaked_password_protection` (plan Pro)
 
 | name                                               | title                                                 | level | facing   | categories   | description                                                                                                                                                                                                                                                                                    | detail                                                                                                                                                                                                                                                    | remediation                                                                                                            | metadata                                                                                                                                                                                                                          | cache_key                                                                                    | observed_at              |
 | -------------------------------------------------- | ----------------------------------------------------- | ----- | -------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------ |

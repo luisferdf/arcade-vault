@@ -81,7 +81,7 @@ Supabase Auth (email+password with email confirmation, Google, GitHub; password 
 
 - `next.config.ts` `headers()` sets `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`, `Strict-Transport-Security`, `Permissions-Policy` on every route. No CSP yet (own spec).
 - RLS is on in `games`, `scores`, `profiles`. `scores_insert_public` requires `score >= 0`, `name ~ '^[A-Z0-9_]{1,10}$'` and an existing `game_id` (guest names with spaces/accents are rejected). `rls_auto_enable()` has `EXECUTE` revoked.
-- Accepted advisor warnings (`get_advisors` security): `username_available` executable by anon/authenticated (sign-up needs it), `auth_leaked_password_protection` (needs Supabase Pro). Auth dashboard (manual, not via MCP): min length 8, all 4 character groups, 10 sign-ups/sign-ins per 5 min per IP. Checklist: `references/security/checklist.md`.
+- `username_available()` is `SECURITY INVOKER` (reads `profiles`, public select) and stays executable by anon/authenticated: sign-up needs it before having a session. Only accepted advisor warning (`get_advisors` security): `auth_leaked_password_protection` (needs Supabase Pro). Auth dashboard (manual, not via MCP): min length 8, all 4 character groups, 10 sign-ups/sign-ins per 5 min per IP. Checklist: `references/security/checklist.md`.
 
 - `lib/games.ts` (server, via `lib/supabase/server.ts`): `getGames`, `getGameById`, `getTopScoresByGame`, `getGlobalTopScores`. Derived stats (`best`, `plays`) are computed from `scores`, not stored.
 - `lib/scores.ts` (browser, via `lib/supabase/client.ts`): `saveScore()` (returns `{ ok, error?: "name_reserved" | "profile_required" | "unknown" }`).

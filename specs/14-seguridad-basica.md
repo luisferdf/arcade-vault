@@ -1,6 +1,6 @@
 # SPEC 14 — Seguridad básica (headers, RLS, Auth y validación de credenciales)
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 04-supabase-setup (clientes y `proxy.ts`), 06-leaderboard-catalogo-supabase (tabla `scores`), 13-auth-supabase (registro, `profiles`, funciones `security definer`)
 > **Fecha:** 2026-10-13
 > **Objetivo:** Aplicar el checklist de seguridad básico (`references/security/checklist.md`): headers de seguridad en Next.js, avisos de Supabase resueltos o aceptados, política de contraseñas y límite de signups configurados, validación con regex de email y contraseña en la UI antes de llamar a Supabase, y protección de las rutas de cuenta con `proxy.ts` (el antiguo `middleware.ts` de Next.js).
@@ -32,7 +32,7 @@ Sin esto, los pasos 1–3 se pueden implementar igual; el paso 4 funciona en el 
 - **RLS:** verificar que `games`, `scores` y `profiles` tienen RLS activo.
 - **`scores_insert_public`:** reemplazar el `WITH CHECK (true)` por una condición mínima (score no negativo, nombre con formato válido, `game_id` existente). El insert sigue siendo público (los invitados guardan scores).
 - **`rls_auto_enable()`:** revocar `EXECUTE` a `public`, `anon` y `authenticated` (función creada por Supabase, no usada por la app).
-- **`username_available()`:** se mantiene ejecutable por `anon`/`authenticated` y el aviso se documenta como riesgo aceptado.
+- **`username_available()`:** se mantiene ejecutable por `anon`/`authenticated` pero pasa a `SECURITY INVOKER` (migración 5, añadida durante la implementación a pedido del usuario): `profiles` tiene select público, así que no necesita `SECURITY DEFINER` y los avisos del advisor desaparecen.
 - **Configuración manual de Auth** (ver prerrequisitos): mínimo 8, requisitos de complejidad, límite de signups por IP.
 - **Validación con regex en el cliente**, en `lib/auth.ts` (helpers puros):
   - **Email:** formato válido y máximo 254 caracteres. Se valida en crear cuenta, iniciar sesión y `/auth/recuperar`.
@@ -46,23 +46,24 @@ Sin esto, los pasos 1–3 se pueden implementar igual; el paso 4 funciona en el 
   - Las redirecciones conservan las cookies de sesión refrescadas.
 - Actualizar `CLAUDE.md` (sección Auth/seguridad, `proxy.ts` ya no "no protege ninguna ruta") y marcar el checklist.
 - informacion de proxy aqui: https://nextjs.org/docs/app/getting-started/proxy
-Ejemplo proxy.ts :
- ```ts 
- import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+  Ejemplo proxy.ts :
+
+```ts
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 // This function can be marked `async` if using `await` inside
 export function proxy(request: NextRequest) {
-  return NextResponse.redirect(new URL('/home', request.url))
+  return NextResponse.redirect(new URL("/home", request.url));
 }
 
 // Alternatively, you can use a default export:
 // export default function proxy(request: NextRequest) { ... }
 
 export const config = {
-  matcher: '/about/:path*',
-}
- ```
+  matcher: "/about/:path*",
+};
+```
 
 **Fuera de alcance (para specs futuros):**
 
@@ -196,7 +197,7 @@ Convenciones:
 - [ ] Los flujos de recuperación de contraseña y de OAuth sin perfil (→ `/auth/nombre`) siguen funcionando con el proxy activo.
 - [ ] La sesión se sigue refrescando en `proxy.ts` (las cookies de sesión no se pierden en las redirecciones).
 - [ ] Los mensajes de error se leen bien en móvil (360 px) y en tema claro y oscuro.
-- [ ] `get_advisors` (security) solo conserva avisos aceptados y documentados: `username_available` y `auth_leaked_password_protection` (pendiente de plan Pro).
+- [ ] `get_advisors` (security) solo conserva el aviso aceptado y documentado `auth_leaked_password_protection` (pendiente de plan Pro).
 - [ ] Sin errores en la consola del navegador durante registro, login, recuperación y navegación general.
 - [ ] `npm run build` compila sin errores y `npm run lint` pasa.
 
@@ -207,7 +208,7 @@ Convenciones:
 - **Sí:** reemplazar `WITH CHECK (true)` de `scores_insert_public` por una condición mínima. Razón: decisión del usuario; limpia el aviso y frena datos basura obvios sin romper a los invitados.
 - **No:** tope máximo de score por juego. Razón: sin validación del lado servidor requiere una spec anti-trampas.
 - **Sí:** revocar `EXECUTE` de `rls_auto_enable()`. Razón: decisión del usuario; la creó Supabase y la app no la necesita.
-- **Sí:** mantener `username_available()` público y documentar el aviso como aceptado. Razón: el registro la necesita antes de tener sesión; los nombres ya son públicos en el Salón.
+- **Sí (revisado):** `username_available()` sigue público pero pasa a `SECURITY INVOKER` (migración 5), decisión del usuario al ver que el advisor seguía mostrando los avisos. Probado como `anon` y `authenticated`. Decisión original (aceptar el aviso), con la misma razón: el registro la necesita antes de tener sesión; los nombres ya son públicos en el Salón.
 - **No:** mover `username_available` a un schema no expuesto o a un route handler. Razón: más código sin ganancia real de seguridad.
 - **Sí:** leaked password protection queda pendiente. Razón: requiere plan Pro de Supabase; decisión del usuario.
 - **Sí:** configuración de Auth (mínimo 8, complejidad, límite de signups = 10 por 5 min por IP) como pasos manuales del usuario. Razón: no se puede aplicar por MCP.

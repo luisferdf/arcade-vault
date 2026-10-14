@@ -115,6 +115,7 @@ Two independent axes, don't conflate them: the **site theme** (dark/light, `[dat
 - `references/game-mobile.md` — per-game mobile-port status (`handleTouchInput`, layout, desktop regression), maintained by the `mobile-porter` subagent.
 - `references/gamepad-assets/` — gamepad mockup for spec 11 (`README.md` is actually the reference HTML/CSS, `gamepad-neon.png` the image). `references/source-assets/` — raw source art (snake).
 - `references/game-performance.md` — per-game performance status (fps base/final, checklist C1–C8), maintained by the `game-performance-booster` subagent.
+- `references/security/` — `checklist.md` (basic security checklist) and `audit-log.md` (open/accepted/resolved findings `SEC-NNN`), maintained by the `security-auditor` subagent.
 
 ## Skills
 
@@ -132,6 +133,7 @@ One game at a time for the code-writing agents. Full behavior, rules and trackin
 - **`skin-designer`** — gives one game the `clasico`/`neon`/`retro` skins (WCAG-checked in dark + light); status in `references/game-with-theme.md`. Writes code.
 - **`mobile-porter`** — ports one game to mobile browsers (`handleTouchInput`, touch layout, Playwright desktop-regression pass); status in `references/game-mobile.md`. Writes code.
 - **`game-performance-booster`** — audits/optimizes one engine with zero visual change (ref: `specs/12-rendimiento-frogger.md`); status in `references/game-performance.md`. Writes code.
+- **`security-auditor`** — audits DB (Supabase MCP, read-only SQL/advisors), app (headers, `proxy.ts`, auth, `/api/contact`, secrets), npm deps and manual Auth config; reports by severity, keeps `references/security/audit-log.md`, and proposes fixes as `Borrador` specs (`specs/NN-seguridad-<slug>.md`). Never edits code or the DB; the only agent besides the main flow allowed to read Supabase.
 
 Flows: `game-planner` → `/add-game <slug>` (or `game-jam <example>` → move chosen variant to `specs/NN-juego-<slug>.md`) → `Aprobado` → `/spec-impl-game` (= `/spec-impl` → `skin-designer` → `mobile-porter`, in series) → optionally `game-performance-booster <id>`. The five agents never touch Supabase; `skin-designer`, `mobile-porter` and `game-performance-booster` never modify an engine other than the one named.
 

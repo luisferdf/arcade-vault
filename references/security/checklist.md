@@ -1,10 +1,15 @@
 ## Checklist de seguridad básico
 
 - [x] RLS: Row Level Security habilitado en ambas tablas: `games` y `scores` (también `profiles`)
-- [x] Minimum password length — mínimo 8 caracteres (+ minúscula, mayúscula, dígito y símbolo)
+- [ ] Minimum password length — mínimo 8 caracteres (+ minúscula, mayúscula, dígito y símbolo) — complejidad verificada por logs (`weak_password`, 2026-10-14); mínimo 8 SIN VERIFICAR
 - [ ] Leaked password protection — (el warning 4) — pendiente: requiere plan Pro de Supabase
-- [x] Max signup rate — limitar signups por IP (anti-bot) — 10 por 5 min
-- [x] Headers de seguridad en Next.js (+ HSTS y Permissions-Policy)
+- [ ] Max signup rate — limitar signups por IP (anti-bot) — 10 por 5 min — SIN VERIFICAR (2026-10-14)
+- [x] Headers de seguridad en Next.js (+ HSTS y Permissions-Policy) — verificación estática `next.config.ts` (runtime no ejecutado)
+- [x] Rutas de cuenta protegidas en `proxy.ts` (`/auth/nueva-contrasena`, `/auth/nombre`, `/auth` con sesión)
+- [ ] Dependencias de producción sin vulnerabilidades críticas/altas — `next@16.2.12` CRÍTICA (SEC-006/007)
+- [ ] `/api/contact` valida tipos y longitudes (SEC-009)
+- [ ] Grants de tabla mínimos para `anon`/`authenticated` (SEC-010)
+- [x] Sin secretos en el repo ni en el historial; `.env*` ignorado; solo publishable key en clientes
 
 Ej:
 
@@ -21,7 +26,9 @@ headers: async () => [{ source: "/(.*)", headers: securityHeaders }];
 
 ## Por el lado e Supabase:
 
-- [x] Panel de warnings de Supabase revisado (2026-10-14): resueltos `rls_policy_always_true` y `rls_auto_enable`; resuelto `username_available` (pasó a `SECURITY INVOKER`); pendiente `auth_leaked_password_protection` (plan Pro)
+- [x] Panel de warnings de Supabase revisado (2026-10-14): resueltos `rls_policy_always_true` y `rls_auto_enable`; resuelto `username_available` (pasó a `SECURITY INVOKER`); pendiente `auth_leaked_password_protection` (plan Pro). Re-auditado por `security-auditor` el 2026-10-14: solo queda ese aviso (ver `audit-log.md`).
+
+Tabla histórica (advisor del 2026-10-13, antes de la spec 14):
 
 | name                                               | title                                                 | level | facing   | categories   | description                                                                                                                                                                                                                                                                                    | detail                                                                                                                                                                                                                                                    | remediation                                                                                                            | metadata                                                                                                                                                                                                                          | cache_key                                                                                    | observed_at              |
 | -------------------------------------------------- | ----------------------------------------------------- | ----- | -------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------ |

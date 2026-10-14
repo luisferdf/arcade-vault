@@ -12,10 +12,10 @@ export const PASSWORD_MIN = 8;
 export const PASSWORD_MAX = 72; // límite de bcrypt
 
 // Símbolos = los que reconoce Supabase en "Password requirements".
-const PASSWORD_SYMBOL = /[!@#$%^&*()_+\-=[\]{};':"|<>?,./`~]/;
+const PASSWORD_SYMBOL = /[!@#$%^&*()_+\-=[\]{};':\\"|<>?,./`~]/;
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const PASSWORD_REGEX =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"|<>?,./`~]).{8,72}$/;
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':\\"|<>?,./`~]).{8,72}$/;
 
 /** Devuelve el mensaje de error en español, o null si el email es válido. */
 export function validateEmail(email: string): string | null {

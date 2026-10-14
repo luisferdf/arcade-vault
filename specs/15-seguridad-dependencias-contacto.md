@@ -1,6 +1,6 @@
 # SPEC 15 — Seguridad: actualizar Next.js, endurecer `/api/contact` y grants de tabla
 
-> **Estado:** Borrador
+> **Estado:** implementado
 > **Depende de:** 03-about-contact-email (`/api/contact`), 04-supabase-setup, 14-seguridad-basica
 > **Fecha:** 2026-10-14
 > **Objetivo:** Cerrar los hallazgos abiertos de la auditoría del 2026-10-14 (`references/security/audit-log.md`): subir `next` a una versión sin advisories críticos, validar tipos y longitudes en `/api/contact` y reducir los grants de tabla de `anon`/`authenticated` a lo que usan las políticas.

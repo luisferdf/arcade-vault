@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Critical: this is not the Next.js you know
 
-This project pins `next@16.2.12`, which has breaking changes vs. what's in your training data. **Before writing any Next.js code (routing, config, proxy/middleware, caching, data fetching), read the relevant page in `node_modules/next/dist/docs/01-app/` first.** Do not assume APIs from memory. Known deltas so far:
+This project pins `next@16.4.0`, which has breaking changes vs. what's in your training data. **Before writing any Next.js code (routing, config, proxy/middleware, caching, data fetching), read the relevant page in `node_modules/next/dist/docs/01-app/` first.** Do not assume APIs from memory. Known deltas so far:
 
 - **`middleware.ts` is gone — it's now `proxy.ts`** at the project root (same location, same purpose, exports `proxy()` instead of `middleware()`). Already in use: `proxy.ts` calls `updateSession()` in `lib/supabase/proxy.ts` (refreshes the Supabase session cookie, returns `{ response, hasSession }`) and redirects account routes (see Auth). See `node_modules/next/dist/docs/01-app/01-getting-started/16-proxy.md`.
 - **Caching/PPR is unified under the `cacheComponents` config flag** (`next.config.ts`), replacing the old `experimental.ppr`, `experimental.useCache`, and `experimental.dynamicIO` flags. Enables the `use cache` directive, `cacheLife`, and `cacheTag`. Not enabled yet in this project. See `node_modules/next/dist/docs/01-app/03-api-reference/05-config/01-next-config-js/cacheComponents.md`.

@@ -4,9 +4,10 @@ import Link from "next/link";
 import { Suspense, useEffect, useState, type SyntheticEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  MIN_PASSWORD_LENGTH,
   authErrorMessage,
   normalizeUsername,
+  validateEmail,
+  validatePassword,
   validateUsername,
 } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +22,8 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [pass, setPass] = useState("");
   const [busy, setBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passError, setPassError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(
     params.get("error") === "callback"
       ? "EL ENLACE NO ES VÁLIDO O YA EXPIRÓ. INTÉNTALO DE NUEVO"
@@ -38,6 +41,8 @@ function AuthForm() {
       setPendingEmail(null);
       setResendMsg(null);
       setError(null);
+      setEmailError(null);
+      setPassError(null);
       setTab("in");
     };
     window.addEventListener("av:auth-reset", reset);
@@ -47,6 +52,22 @@ function AuthForm() {
   const switchTab = (next: Tab) => {
     setTab(next);
     setError(null);
+    setEmailError(null);
+    setPassError(null);
+  };
+
+  // Valida email (y contraseña si fija una nueva) antes de llamar a Supabase.
+  const validateFields = (): boolean => {
+    const emailErr = validateEmail(email);
+    const passErr =
+      tab === "up"
+        ? validatePassword(pass)
+        : pass
+          ? null
+          : "ESCRIBE TU CONTRASEÑA";
+    setEmailError(emailErr);
+    setPassError(passErr);
+    return !emailErr && !passErr;
   };
 
   const signIn = async () => {
@@ -68,10 +89,6 @@ function AuthForm() {
     const nameError = validateUsername(name);
     if (nameError) {
       setError(nameError);
-      return;
-    }
-    if (pass.length < MIN_PASSWORD_LENGTH) {
-      setError("LA CONTRASEÑA DEBE TENER AL MENOS 8 CARACTERES");
       return;
     }
 
@@ -114,6 +131,7 @@ function AuthForm() {
     e.preventDefault();
     if (busy) return;
     setError(null);
+    if (!validateFields()) return;
     setBusy(true);
     try {
       if (tab === "in") await signIn();
@@ -287,11 +305,21 @@ function AuthForm() {
             id="auth-email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              setEmailError(null);
+            }}
             placeholder="jugador@vault.gg"
             autoComplete="email"
+            aria-invalid={!!emailError}
+            aria-describedby={emailError ? "auth-email-error" : undefined}
             required
           />
+          {emailError && (
+            <div id="auth-email-error" className="contact-error" role="alert">
+              {emailError}
+            </div>
+          )}
         </div>
         <div className="field">
           <label htmlFor="auth-pass">Contraseña</label>
@@ -299,11 +327,21 @@ function AuthForm() {
             id="auth-pass"
             type="password"
             value={pass}
-            onChange={(e) => setPass(e.target.value)}
+            onChange={(e) => {
+              setPass(e.target.value);
+              setPassError(null);
+            }}
             placeholder="••••••••"
             autoComplete={tab === "in" ? "current-password" : "new-password"}
+            aria-invalid={!!passError}
+            aria-describedby={passError ? "auth-pass-error" : undefined}
             required
           />
+          {passError && (
+            <div id="auth-pass-error" className="contact-error" role="alert">
+              {passError}
+            </div>
+          )}
         </div>
 
         {tab === "in" && (

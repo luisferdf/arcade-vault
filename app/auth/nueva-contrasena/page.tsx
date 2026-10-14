@@ -3,7 +3,7 @@
 import { useEffect, useState, type SyntheticEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../_components/AuthProvider";
-import { MIN_PASSWORD_LENGTH, authErrorMessage } from "@/lib/auth";
+import { authErrorMessage, validatePassword } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 
 export default function NuevaContrasenaPage() {
@@ -13,6 +13,7 @@ export default function NuevaContrasenaPage() {
   const [repeat, setRepeat] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [passError, setPassError] = useState<string | null>(null);
 
   // Requiere la sesión de recuperación que crea /auth/callback.
   useEffect(() => {
@@ -23,10 +24,9 @@ export default function NuevaContrasenaPage() {
     e.preventDefault();
     if (busy) return;
     setError(null);
-    if (pass.length < MIN_PASSWORD_LENGTH) {
-      setError("LA CONTRASEÑA DEBE TENER AL MENOS 8 CARACTERES");
-      return;
-    }
+    const passErr = validatePassword(pass);
+    setPassError(passErr);
+    if (passErr) return;
     if (pass !== repeat) {
       setError("LAS CONTRASEÑAS NO COINCIDEN");
       return;
@@ -63,11 +63,21 @@ export default function NuevaContrasenaPage() {
               id="np-pass"
               type="password"
               value={pass}
-              onChange={(e) => setPass(e.target.value)}
+              onChange={(e) => {
+                setPass(e.target.value);
+                setPassError(null);
+              }}
               placeholder="••••••••"
               autoComplete="new-password"
+              aria-invalid={!!passError}
+              aria-describedby={passError ? "np-pass-error" : undefined}
               required
             />
+            {passError && (
+              <div id="np-pass-error" className="contact-error" role="alert">
+                {passError}
+              </div>
+            )}
           </div>
           <div className="field">
             <label htmlFor="np-repeat">Repetir contraseña</label>

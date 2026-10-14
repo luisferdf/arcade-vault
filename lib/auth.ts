@@ -7,7 +7,42 @@ export interface AuthUser {
 /** Regex del nombre de jugador, compartida con el `check` de `public.profiles`. */
 export const USERNAME_REGEX = /^[A-Z0-9_]{3,10}$/;
 
-export const MIN_PASSWORD_LENGTH = 8;
+export const EMAIL_MAX = 254;
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 72; // límite de bcrypt
+
+// Símbolos = los que reconoce Supabase en "Password requirements".
+const PASSWORD_SYMBOL = /[!@#$%^&*()_+\-=[\]{};':"|<>?,./`~]/;
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+export const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"|<>?,./`~]).{8,72}$/;
+
+/** Devuelve el mensaje de error en español, o null si el email es válido. */
+export function validateEmail(email: string): string | null {
+  const value = email.trim();
+  if (!value) return "ESCRIBE TU CORREO ELECTRÓNICO";
+  if (value.length > EMAIL_MAX || !EMAIL_REGEX.test(value)) {
+    return "EMAIL NO VÁLIDO";
+  }
+  return null;
+}
+
+/** Devuelve el primer requisito que falta, o null si la contraseña es válida. */
+export function validatePassword(password: string): string | null {
+  if (password.length < PASSWORD_MIN) {
+    return "LA CONTRASEÑA DEBE TENER AL MENOS 8 CARACTERES";
+  }
+  if (password.length > PASSWORD_MAX) {
+    return "LA CONTRASEÑA NO PUEDE SUPERAR 72 CARACTERES";
+  }
+  if (!/[a-z]/.test(password)) return "LA CONTRASEÑA NECESITA UNA MINÚSCULA";
+  if (!/[A-Z]/.test(password)) return "LA CONTRASEÑA NECESITA UNA MAYÚSCULA";
+  if (!/\d/.test(password)) return "LA CONTRASEÑA NECESITA UN NÚMERO";
+  if (!PASSWORD_SYMBOL.test(password)) {
+    return "LA CONTRASEÑA NECESITA UN SÍMBOLO (!@#$%…)";
+  }
+  return null;
+}
 
 export function normalizeUsername(raw: string): string {
   return raw.trim().toUpperCase();
@@ -48,7 +83,7 @@ export function authErrorMessage(error: {
     case "over_request_rate_limit":
       return "DEMASIADOS INTENTOS. ESPERA UN MOMENTO";
     case "weak_password":
-      return "CONTRASEÑA DÉBIL. USA AL MENOS 8 CARACTERES";
+      return "CONTRASEÑA DÉBIL. USA 8+ CARACTERES CON MINÚSCULA, MAYÚSCULA, NÚMERO Y SÍMBOLO";
     case "signup_disabled":
       return "EL REGISTRO ESTÁ DESACTIVADO";
     case "validation_failed":

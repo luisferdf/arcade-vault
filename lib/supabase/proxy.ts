@@ -1,7 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-export async function updateSession(request: NextRequest) {
+/**
+ * Refresca la sesión de Supabase. `response` lleva las cookies refrescadas;
+ * `hasSession` es una comprobación optimista (claims del JWT, sin consultar la BD).
+ */
+export async function updateSession(
+  request: NextRequest,
+): Promise<{ response: NextResponse; hasSession: boolean }> {
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -25,7 +31,7 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return supabaseResponse;
+  return { response: supabaseResponse, hasSession: !!data?.claims?.sub };
 }

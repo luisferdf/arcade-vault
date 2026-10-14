@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, type SyntheticEvent } from "react";
-import { authErrorMessage } from "@/lib/auth";
+import { authErrorMessage, validateEmail } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/client";
 
 export default function RecuperarPage() {
@@ -10,15 +10,15 @@ export default function RecuperarPage() {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
 
   const submit = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (busy) return;
     setError(null);
-    if (!email.trim()) {
-      setError("ESCRIBE TU CORREO ELECTRÓNICO");
-      return;
-    }
+    const emailErr = validateEmail(email);
+    setEmailError(emailErr);
+    if (emailErr) return;
     setBusy(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.resetPasswordForEmail(
@@ -66,11 +66,25 @@ export default function RecuperarPage() {
                 id="rec-email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError(null);
+                }}
                 placeholder="jugador@vault.gg"
                 autoComplete="email"
+                aria-invalid={!!emailError}
+                aria-describedby={emailError ? "rec-email-error" : undefined}
                 required
               />
+              {emailError && (
+                <div
+                  id="rec-email-error"
+                  className="contact-error"
+                  role="alert"
+                >
+                  {emailError}
+                </div>
+              )}
             </div>
             {error && (
               <div

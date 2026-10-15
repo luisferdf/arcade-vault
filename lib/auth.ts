@@ -86,6 +86,9 @@ export function authErrorMessage(error: {
       return "CONTRASEÑA DÉBIL. USA 8+ CARACTERES CON MINÚSCULA, MAYÚSCULA, NÚMERO Y SÍMBOLO";
     case "signup_disabled":
       return "EL REGISTRO ESTÁ DESACTIVADO";
+    case "reauthentication_needed":
+    case "reauthentication_not_valid":
+      return "SESIÓN ANTIGUA. PIDE UN ENLACE DE RECUPERACIÓN NUEVO PARA CAMBIAR LA CONTRASEÑA";
     case "validation_failed":
       return "REVISA LOS DATOS INGRESADOS";
     default:

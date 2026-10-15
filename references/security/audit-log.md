@@ -47,7 +47,7 @@ No consultado al usuario en esta pasada.
 - [ ] `Confirm email` activado — SIN VERIFICAR.
 - [ ] `Site URL` y `Redirect URLs` (solo localhost y producción, sin comodines) — SIN VERIFICAR.
 - [ ] Google/GitHub con callback correcta — SIN VERIFICAR.
-- [ ] Secure password change (SEC-011) — SIN VERIFICAR.
+- [x] Secure password change (SEC-011) — activado por el usuario el 2026-10-15 (spec 16). Solo exige reautenticación si la sesión tiene >24 h; mitiga, no cierra.
 - [ ] Leaked password protection — pendiente plan Pro (SEC-019).
 
 ## Resueltos

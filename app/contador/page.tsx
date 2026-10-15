@@ -3,12 +3,12 @@
 import { useState } from "react";
 
 const MAX_POKEMON = 1025;
+const SPRITE_URL =
+  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork";
 
 export default function ContadorPage() {
   const [count, setCount] = useState(1);
-
   const id = ((count - 1) % MAX_POKEMON) + 1;
-  const src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
@@ -16,7 +16,7 @@ export default function ContadorPage() {
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         key={id}
-        src={src}
+        src={`${SPRITE_URL}/${id}.png`}
         alt={`Pokémon #${id}`}
         width={256}
         height={256}

@@ -40,6 +40,7 @@ function AuthForm() {
     const reset = () => {
       setPendingEmail(null);
       setResendMsg(null);
+      setPass("");
       setError(null);
       setEmailError(null);
       setPassError(null);
@@ -231,6 +232,7 @@ function AuthForm() {
           onClick={() => {
             setPendingEmail(null);
             setResendMsg(null);
+            setPass("");
             switchTab("in");
           }}
         >

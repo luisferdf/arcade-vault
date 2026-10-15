@@ -28,14 +28,15 @@ Spec 15 cierra SEC-006, SEC-007, SEC-009 y SEC-010: `next@16.4.0`, `npm audit --
 
 ## Aceptados
 
-| ID      | Tema                                                           | Motivo                                                                                                                          | Spec |
-| ------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---- |
-| SEC-018 | Sin `Content-Security-Policy`                                  | Spec propia. Único sink XSS sigue siendo `app/layout.tsx:49` con constante estática `THEME_INIT_SCRIPT`.                        | 14   |
-| SEC-019 | `auth_leaked_password_protection` desactivado                  | Requiere plan Pro. Único aviso del advisor security (2.ª pasada 2026-10-14).                                                    | 14   |
-| SEC-020 | Sin rate limiting propio (`/api/contact`, inserts de `scores`) | Fuera de alcance. Con SEC-009 cerrado, el abuso queda limitado a mensajes ≤ 2000 caracteres, pero sigue sin tope de frecuencia. | 14   |
-| SEC-021 | Sin tope de score / anti-trampas                               | Requiere validación servidor.                                                                                                   | 14   |
-| SEC-022 | `proxy.ts` comprobación optimista con `getClaims()`            | Sesión revocada pasa hasta expirar el JWT; datos protegidos por RLS y triggers.                                                 | 14   |
-| SEC-023 | `username_available()` ejecutable por `anon`/`authenticated`   | Registro la necesita sin sesión; `SECURITY INVOKER`, `search_path=''` (re-verificado).                                          | 14   |
+| ID      | Tema                                                                      | Motivo                                                                                                                                                                                                    | Spec |
+| ------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---- |
+| SEC-018 | Sin `Content-Security-Policy`                                             | Spec propia. Único sink XSS sigue siendo `app/layout.tsx:49` con constante estática `THEME_INIT_SCRIPT`.                                                                                                  | 14   |
+| SEC-019 | `auth_leaked_password_protection` desactivado                             | Requiere plan Pro. Único aviso del advisor security (2.ª pasada 2026-10-14).                                                                                                                              | 14   |
+| SEC-020 | Sin rate limiting propio (`/api/contact`, inserts de `scores`)            | Fuera de alcance. Con SEC-009 cerrado, el abuso queda limitado a mensajes ≤ 2000 caracteres, pero sigue sin tope de frecuencia.                                                                           | 14   |
+| SEC-021 | Sin tope de score / anti-trampas                                          | Requiere validación servidor.                                                                                                                                                                             | 14   |
+| SEC-022 | `proxy.ts` comprobación optimista con `getClaims()`                       | Sesión revocada pasa hasta expirar el JWT; datos protegidos por RLS y triggers.                                                                                                                           | 14   |
+| SEC-023 | `username_available()` ejecutable por `anon`/`authenticated`              | Registro la necesita sin sesión; `SECURITY INVOKER`, `search_path=''` (re-verificado).                                                                                                                    | 14   |
+| SEC-025 | INFO: enumeración de correos en el registro (`app/auth/page.tsx:123-126`) | El correo no es dato sensible; Supabase limita 10 sign-ups / 5 min / IP; `username_available` ya expone nombres; un mensaje genérico dejaría sin respuesta a quien ya tiene cuenta. El mensaje no cambia. | 16   |
 
 ## Sin verificar (configuración manual de Auth, 2026-10-14)
 
@@ -72,4 +73,12 @@ No consultado al usuario en esta pasada.
 - Advisor security: solo `auth_leaked_password_protection`. Performance: sin cambios (SEC-016).
 - Sin rutas API nuevas (solo `app/api/contact`). `next.config.ts` sin `redirects`/`rewrites`/`images`. Sinks XSS: solo `app/layout.tsx:49` (aceptado).
 - Secretos: sin `service_role` en el código; solo `.env.example`/`.env.template` trackeados.
+
+## Verificación spec 16 (2026-10-15, solo lectura)
+
+- **H5 OK:** `handle_new_user` es `SECURITY DEFINER`, `search_path=''`. No valida la regex en la función: inserta `upper(user_metadata.username)` y la valida el `CHECK profiles_username_check` (`^[A-Z0-9_]{3,10}$`) + `UNIQUE`; un username inválido aborta el alta («Database error saving new user» → `authErrorMessage`). Sin migración.
+- **H1 (SEC-011) mitigado:** Secure password change activo; solo exige nonce con sesión >24 h. Barrera real contra robo de sesión: CSP (SEC-018, spec 17).
+- **H3 corregido:** `proxy.ts` `matcher` con `\\.`. **H4 corregido:** `pass` se borra al salir de «REVISA TU CORREO» (no tras `resend`, que lo necesita).
+- Advisor security: solo `auth_leaked_password_protection`. `npm audit --omit=dev`: 0 vulnerabilidades.
+- Pendiente manual: `Redirect URLs` sin comodines.
 - `next`/`react`/`react-dom`/`eslint-config-next` coinciden entre `package.json` y lockfile.

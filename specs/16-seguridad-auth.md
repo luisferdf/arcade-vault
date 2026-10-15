@@ -42,7 +42,7 @@ Sin cambios de esquema. H5 es solo verificación; si falla, se corrige con una m
 1. **Dashboard (usuario).** ~~Activar _Secure password change_~~ (hecho 2026-10-15). Pendiente: revisar _Redirect URLs_ (sin comodines) y anotar ambos en `checklist.md`.
 2. **`/auth/nueva-contrasena`.** Opción A: leer `node_modules/next/dist/docs/` y la doc de Supabase (`search_docs`: «reauthentication», «recovery») para el comportamiento exacto de `updateUser` con _Secure password change_ activo; manejar `err.code` de reautenticación en `authErrorMessage`. Prueba manual: enlace de recuperación → cambia la contraseña; sesión normal sin reautenticación → error claro en español.
 3. **`proxy.ts`.** Corregir el `matcher`. Prueba manual: `/auth/nombre` sin sesión → 307 `/auth`; `/auth` con sesión → 307 `/`; `logo.png` y `/_next/static/...` no pasan por el proxy.
-4. **`app/auth/page.tsx`.** Limpiar `pass` al pulsar «INICIAR SESIÓN» en la pantalla de confirmación y tras `resend` correcto (el mensaje de correo existente no cambia). Prueba manual: registro con correo nuevo y existente; reenvío de correo; login normal.
+4. **`app/auth/page.tsx`.** Limpiar `pass` al pulsar «INICIAR SESIÓN» en la pantalla de confirmación y en el reset del Nav (`av:auth-reset`). **No** se limpia tras `resend`: `resend()` necesita `pass` para detectar cuenta ya confirmada y reenvíos repetidos (decisión 2026-10-15) (el mensaje de correo existente no cambia). Prueba manual: registro con correo nuevo y existente; reenvío de correo; login normal.
 5. **Verificación H5 y cierre.** `security-auditor`: definición de `handle_new_user`, `get_advisors`, `npm audit --omit=dev`. Registrar en `audit-log.md`.
 
 ## Criterios de aceptación

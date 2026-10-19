@@ -142,4 +142,8 @@ Flows: `game-planner` → `/add-game <slug>` (or `game-jam <example>` → move c
 - `.claude/settings.json` runs a PostToolUse hook: every Write/Edit is auto-formatted with Prettier and `eslint --fix`. Don't hand-format.
 - `.claude/worktrees/` holds agent worktrees; it's gitignored, never commit it.
 - Playwright screenshots always go in `.playwright-screenshots/`, never the project root.
-- Secrets live in `.env.local` (`RESEND_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`); keep `.env.example` in sync.
+- Secrets live in `.env.local` (`RESEND_API_KEY`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`); keep `.env.example` in sync. `NEXT_PUBLIC_DONATE_URL` (Ko-fi link, not a secret) is optional: see Donations.
+
+### Donations
+
+`lib/donate.ts` exports `DONATE_URL` (from `NEXT_PUBLIC_DONATE_URL`, `null` if unset). `DonateButton` (`app/_components/DonateButton.tsx`, variants `button`/`link`) returns `null` without it, so the feature is off with no code change. Surfaces: footer (`app/layout.tsx`), «APOYA EL PROYECTO» block in `/about`, secondary link in the game-over modal (`GamePlayerClient`); never during play. Plain external `<a>` (`target="_blank"`, `rel="noopener noreferrer"`), no embedded widget, nothing stored.

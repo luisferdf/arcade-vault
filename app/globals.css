@@ -518,6 +518,28 @@ a {
 .btn.pulse {
   animation: pulse 1.6s ease-in-out infinite;
 }
+
+/* ===== donate link (spec 17) ===== */
+.donate-link {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--yellow);
+  text-decoration: none;
+  border-bottom: 1px dashed transparent;
+  transition:
+    border-color 160ms,
+    text-shadow 160ms;
+}
+.donate-link:hover,
+.donate-link:focus-visible {
+  border-bottom-color: var(--yellow);
+  text-shadow: 0 0 8px var(--yellow);
+}
+[data-theme="light"] .donate-link:hover,
+[data-theme="light"] .donate-link:focus-visible {
+  text-shadow: none;
+}
 @keyframes pulse {
   0%,
   100% {
@@ -1882,6 +1904,14 @@ body.av-fullscreen-game .crt-bottom {
   justify-content: center;
   margin-top: 18px;
   flex-wrap: wrap;
+}
+.modal .modal-donate {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-align: center;
 }
 /* En teléfonos el botón GUARDAR PUNTUACIÓN no cabe junto al input y se
    salía del modal por la derecha: se apila bajo el input. */
@@ -3259,6 +3289,28 @@ body.av-fullscreen-game .crt-bottom {
   max-width: 1200px;
   margin: 0 auto 80px;
   padding: 0 32px;
+}
+.about-donate {
+  max-width: 1200px;
+  margin: 0 auto 80px;
+  padding: 0 32px;
+  text-align: center;
+}
+.about-donate .kicker {
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  margin-bottom: 18px;
+}
+.about-donate .contact-title {
+  color: var(--yellow);
+  text-shadow: 0 0 12px rgba(245, 255, 0, 0.4);
+}
+[data-theme="light"] .about-donate .contact-title {
+  text-shadow: none;
+}
+.about-donate .contact-sub {
+  max-width: 560px;
+  margin: 18px auto 24px;
 }
 .contact-grid {
   display: grid;

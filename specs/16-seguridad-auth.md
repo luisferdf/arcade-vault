@@ -28,7 +28,7 @@ Revisión de `proxy.ts`, `lib/supabase/proxy.ts`, `lib/auth.ts`, `AuthProvider`,
 
 **Fuera de alcance:**
 
-- CSP (SEC-018): spec propia. Sube de prioridad porque las cookies de sesión de `createBrowserClient` no son HttpOnly; se recomienda como spec 17.
+- CSP (SEC-018): spec propia. Sube de prioridad porque las cookies de sesión de `createBrowserClient` no son HttpOnly; se recomienda como spec 18.
 - Rate limiting propio (SEC-020), anti-trampas (SEC-021), leaked password protection (SEC-019, requiere Pro).
 - Cambiar el modelo de sesión (p. ej. mover a cookies HttpOnly vía servidor).
 - Pantalla de «cambiar contraseña» para usuarios con sesión normal (opción B descartada).
@@ -61,7 +61,7 @@ Sin cambios de esquema. H5 es solo verificación; si falla, se corrige con una m
 
 - **Nota de proceso:** borrador redactado a partir de la revisión manual del 2026-10-15, sin la entrevista de `/spec`. Las decisiones 1 y 2 ya están resueltas (abajo); queda la aprobación humana.
 - **Sí (decisión 1, opción A):** activar _Secure password change_ (_Require reauthentication when changing password_) en Supabase y mantener `/auth/nueva-contrasena` solo para el flujo de recuperación. Sin código nuevo salvo el mensaje de error. Razón: la barrera debe estar en el servidor. **Hecho por el usuario el 2026-10-15.**
-- **Alcance real de A (doc de Supabase):** solo exige confirmar con código por correo (`reauthenticate()` + `nonce`) si la sesión tiene más de 24 h. Una sesión robada y reciente aún puede cambiar la contraseña, así que H1 se **mitiga**, no se cierra; la barrera contra el robo de sesión es el CSP (spec 17).
+- **Alcance real de A (doc de Supabase):** solo exige confirmar con código por correo (`reauthenticate()` + `nonce`) si la sesión tiene más de 24 h. Una sesión robada y reciente aún puede cambiar la contraseña, así que H1 se **mitiga**, no se cierra; la barrera contra el robo de sesión es el CSP (spec 18).
 - **No:** _Require current password_ en el dashboard: rompería la recuperación («olvidé mi contraseña»). Solo tendría sentido junto con la opción B.
 - **No:** opción B (pantalla «cambiar contraseña» con contraseña actual para sesiones normales). Razón: no existe esa pantalla hoy; ampliaría el alcance.
 - **No:** opción C (distinguir la sesión de recuperación en el cliente con `PASSWORD_RECOVERY`). Razón: una comprobación de cliente no es una barrera de seguridad.

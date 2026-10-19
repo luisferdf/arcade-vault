@@ -1,11 +1,24 @@
 "use client";
 
 import { useEffect, useState, type SubmitEvent } from "react";
-import { HighlightIcon, type HighlightIconProps } from "../_components/HighlightIcon";
+import {
+  HighlightIcon,
+  type HighlightIconProps,
+} from "../_components/HighlightIcon";
+import { DonateButton } from "../_components/DonateButton";
+import { DONATE_URL } from "@/lib/donate";
 
-const HIGHLIGHTS: { i: HighlightIconProps["kind"]; t: string; c: "magenta" | "cyan" | "green" }[] = [
+const HIGHLIGHTS: {
+  i: HighlightIconProps["kind"];
+  t: string;
+  c: "magenta" | "cyan" | "green";
+}[] = [
   { i: "HEART", t: "HECHO CON ❤️ PARA JUGADORES", c: "magenta" },
-  { i: "BROWSER", t: "JUEGOS EN HTML — CORREN EN CUALQUIER NAVEGADOR", c: "cyan" },
+  {
+    i: "BROWSER",
+    t: "JUEGOS EN HTML — CORREN EN CUALQUIER NAVEGADOR",
+    c: "cyan",
+  },
   { i: "PLANT", t: "PROYECTO EN CONSTANTE CRECIMIENTO", c: "green" },
 ];
 
@@ -23,7 +36,7 @@ function useReveal() {
           }
         });
       },
-      { threshold: 0.12 }
+      { threshold: 0.12 },
     );
     els.forEach((el) => io.observe(el));
     return () => io.disconnect();
@@ -51,11 +64,17 @@ export default function About() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: form.name, email: form.email, message: form.msg }),
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          message: form.msg,
+        }),
       });
       const data: { ok: boolean; error?: string } = await res.json();
       if (!res.ok || !data.ok) {
-        setErrorMsg(data.error || "No se pudo enviar el mensaje. Intenta de nuevo.");
+        setErrorMsg(
+          data.error || "No se pudo enviar el mensaje. Intenta de nuevo.",
+        );
         setStatus("error");
         return;
       }
@@ -72,14 +91,19 @@ export default function About() {
         <div className="kicker pixel neon-yellow">▸ ACERCA DE</div>
         <h1 className="about-title">ACERCA DE ARCADE VAULT</h1>
         <p className="about-mission">
-          ARCADE VAULT nació del amor por los videojuegos clásicos. Nuestra misión es preservar y celebrar
-          los arcades que definieron una generación, haciéndolos accesibles para todos, en cualquier lugar
-          y sin costo.
+          ARCADE VAULT nació del amor por los videojuegos clásicos. Nuestra
+          misión es preservar y celebrar los arcades que definieron una
+          generación, haciéndolos accesibles para todos, en cualquier lugar y
+          sin costo.
         </p>
 
         <div className="highlight-row">
           {HIGHLIGHTS.map((h, i) => (
-            <div key={h.i} className={"highlight " + h.c} style={{ transitionDelay: `${i * 80}ms` }}>
+            <div
+              key={h.i}
+              className={"highlight " + h.c}
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
               <HighlightIcon kind={h.i} />
               <div className="hl-text pixel">{h.t}</div>
             </div>
@@ -103,8 +127,8 @@ export default function About() {
             <div className="kicker pixel neon-cyan">▸ CONTACTO</div>
             <h2 className="contact-title">CONTÁCTANOS</h2>
             <p className="contact-sub">
-              ¿Tienes alguna sugerencia, quieres proponer un juego, o simplemente quieres saludar?
-              Escríbenos.
+              ¿Tienes alguna sugerencia, quieres proponer un juego, o
+              simplemente quieres saludar? Escríbenos.
             </p>
             <div className="contact-tips">
               <div className="tip">
@@ -122,7 +146,10 @@ export default function About() {
             </div>
           </div>
 
-          <form className={"contact-form" + (shake ? " shake" : "")} onSubmit={onSubmit}>
+          <form
+            className={"contact-form" + (shake ? " shake" : "")}
+            onSubmit={onSubmit}
+          >
             {status !== "sent" ? (
               <>
                 <div className="field">
@@ -138,7 +165,9 @@ export default function About() {
                   <input
                     type="email"
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, email: e.target.value })
+                    }
                     placeholder="jugador@vault.gg"
                   />
                 </div>
@@ -151,8 +180,15 @@ export default function About() {
                     placeholder="Cuéntanos qué tienes en mente…"
                   />
                 </div>
-                {status === "error" && errorMsg ? <div className="contact-error">{errorMsg}</div> : null}
-                <button className="btn xl press" type="submit" style={{ width: "100%" }} disabled={status === "sending"}>
+                {status === "error" && errorMsg ? (
+                  <div className="contact-error">{errorMsg}</div>
+                ) : null}
+                <button
+                  className="btn xl press"
+                  type="submit"
+                  style={{ width: "100%" }}
+                  disabled={status === "sending"}
+                >
                   {status === "sending" ? "▶  ENVIANDO…" : "▶  ENVIAR MENSAJE"}
                 </button>
               </>
@@ -166,13 +202,15 @@ export default function About() {
                 </div>
                 <div className="term-body">
                   <div className="line">
-                    <span className="prompt">vault@arcade:~$</span> ./send_message --to=team
+                    <span className="prompt">vault@arcade:~$</span>{" "}
+                    ./send_message --to=team
                   </div>
                   <div className="line dim">[OK] Conectando con servidor…</div>
                   <div className="line dim">[OK] Validando contenido…</div>
                   <div className="line dim">[OK] Transmitiendo paquete…</div>
                   <div className="line success">
-                    &gt; MENSAJE RECIBIDO. TE RESPONDEREMOS PRONTO. GRACIAS, {form.name.trim().toUpperCase()}.
+                    &gt; MENSAJE RECIBIDO. TE RESPONDEREMOS PRONTO. GRACIAS,{" "}
+                    {form.name.trim().toUpperCase()}.
                     <span className="caret">_</span>
                   </div>
                   <div style={{ marginTop: 18 }}>
@@ -193,6 +231,18 @@ export default function About() {
           </form>
         </div>
       </section>
+
+      {DONATE_URL ? (
+        <section className="about-donate reveal">
+          <div className="kicker pixel neon-yellow">▸ DONACIONES</div>
+          <h2 className="contact-title">APOYA EL PROYECTO</h2>
+          <p className="contact-sub">
+            ARCADE VAULT es gratis y seguirá siéndolo. Si te gusta, tu aporte
+            voluntario va directo a hosting y a nuevos juegos.
+          </p>
+          <DonateButton />
+        </section>
+      ) : null}
     </div>
   );
 }

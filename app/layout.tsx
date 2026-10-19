@@ -5,7 +5,9 @@ import {
   Courier_Prime,
 } from "next/font/google";
 import { AuthProvider } from "./_components/AuthProvider";
+import { DonateButton } from "./_components/DonateButton";
 import { Nav } from "./_components/Nav";
+import { DONATE_URL } from "@/lib/donate";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
@@ -67,6 +69,12 @@ export default function RootLayout({
               }}
             >
               © 2026 ARCADE VAULT · HECHO CON PIXELES Y NEÓN · v2.6.0
+              {DONATE_URL ? (
+                <>
+                  {" · "}
+                  <DonateButton variant="link" />
+                </>
+              ) : null}
             </footer>
           </div>
         </AuthProvider>

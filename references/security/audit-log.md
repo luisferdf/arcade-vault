@@ -77,7 +77,7 @@ No consultado al usuario en esta pasada.
 ## Verificación spec 16 (2026-10-15, solo lectura)
 
 - **H5 OK:** `handle_new_user` es `SECURITY DEFINER`, `search_path=''`. No valida la regex en la función: inserta `upper(user_metadata.username)` y la valida el `CHECK profiles_username_check` (`^[A-Z0-9_]{3,10}$`) + `UNIQUE`; un username inválido aborta el alta («Database error saving new user» → `authErrorMessage`). Sin migración.
-- **H1 (SEC-011) mitigado:** Secure password change activo; solo exige nonce con sesión >24 h. Barrera real contra robo de sesión: CSP (SEC-018, spec 17).
+- **H1 (SEC-011) mitigado:** Secure password change activo; solo exige nonce con sesión >24 h. Barrera real contra robo de sesión: CSP (SEC-018, spec 18).
 - **H3 corregido:** `proxy.ts` `matcher` con `\\.`. **H4 corregido:** `pass` se borra al salir de «REVISA TU CORREO» (no tras `resend`, que lo necesita).
 - Advisor security: solo `auth_leaked_password_protection`. `npm audit --omit=dev`: 0 vulnerabilidades.
 - Pendiente manual: `Redirect URLs` sin comodines.

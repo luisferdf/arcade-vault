@@ -1905,6 +1905,14 @@ body.av-fullscreen-game .crt-bottom {
   margin-top: 18px;
   flex-wrap: wrap;
 }
+.modal .modal-donate {
+  margin-top: 16px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  text-align: center;
+}
 /* En teléfonos el botón GUARDAR PUNTUACIÓN no cabe junto al input y se
    salía del modal por la derecha: se apila bajo el input. */
 @media (max-width: 480px) {

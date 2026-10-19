@@ -1,6 +1,6 @@
 # SPEC 17 — Donaciones («Invítame un café»)
 
-> **Estado:** aprobado
+> **Estado:** implementado
 > **Depende de:** 02-home-landing, 03-about-contacto, 14-seguridad-basica
 > **Fecha:** 2026-10-15
 > **Objetivo:** Añadir una vía de donación voluntaria (enlace externo a una plataforma de terceros) para cubrir costos de hosting/Supabase, sin cobros propios, sin cuentas de pago y sin afectar el juego.

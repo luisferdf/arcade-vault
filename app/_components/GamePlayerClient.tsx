@@ -27,6 +27,8 @@ import {
   subscribeIsTouchDevice,
 } from "@/lib/games/touch";
 import { TouchControls } from "./TouchControls";
+import { DonateButton } from "./DonateButton";
+import { DONATE_URL } from "@/lib/donate";
 
 export function GamePlayerClient({ game }: { game: Game | null }) {
   const router = useRouter();
@@ -395,6 +397,11 @@ export function GamePlayerClient({ game }: { game: Game | null }) {
                 VOLVER AL VAULT
               </button>
             </div>
+            {DONATE_URL && (
+              <div className="modal-donate">
+                ¿Te gustó? <DonateButton variant="link" />
+              </div>
+            )}
           </div>
         </div>
       )}
